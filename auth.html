@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Авторизация</title>
+</head>
+<body>
+  <h2>Авторизация</h2>
+  <form id="auth-form">
+    <label for="username">Имя пользователя:</label>
+    <input type="text" id="username" name="username" required><br><br>
+    <label for="password">Пароль:</label>
+    <input type="password" id="password" name="password" required><br><br>
+    <button type="submit">Войти</button>
+  </form>
+  <button id="close-btn">Закрыть</button> <!-- Кнопка для закрытия окна -->
+  <p id="error-message" style="color: red;"></p>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+
+    document.getElementById('auth-form').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      ipcRenderer.send('auth-submit', { username, password });
+    });
+
+    document.getElementById('close-btn').addEventListener('click', () => {
+      ipcRenderer.send('close-auth-window');
+    });
+
+    ipcRenderer.on('auth-failure', (event, message) => {
+      document.getElementById('error-message').innerText = message;
+    });
+
+    ipcRenderer.on('login-success', () => {
+      ipcRenderer.send('login-success');
+    });
+  </script>
+</body>
+</html>
