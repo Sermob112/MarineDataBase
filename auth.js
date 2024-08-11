@@ -1,9 +1,17 @@
 const { BrowserWindow, ipcMain, app } = require('electron');
 const { User } = require('./models'); 
+const { initializeDatabase } = require('./initialize_db');
 let authWindow;
 let mainWindow;
-
+initializeDatabase().then(success => {
+  if (success) {
+      console.log('Database setup completed successfully.');
+  } else {
+      console.log('Database setup failed.');
+  }
+});
 function createAuthWindow() {
+  
   authWindow = new BrowserWindow({
     width: 600,
     height: 400,

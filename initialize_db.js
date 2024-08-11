@@ -37,5 +37,5 @@ async function initializeDatabase() {
         return false;
     }
 }
-
+module.exports = { initializeDatabase };
 initializeDatabase();
