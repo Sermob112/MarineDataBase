@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow,Menu } = require('electron');
 const { createAuthWindow, setMainWindow } = require('./auth');
 
 let mainWindow;
@@ -15,12 +15,70 @@ function createMainWindow() {
   });
 
   mainWindow.loadFile('index.html');
-  setMainWindow(mainWindow); // Передаем окно в auth.js
+  setMainWindow(mainWindow); 
 }
+// Функция для создания кастомного меню
+function createCustomMenu() {
+  const template = [
+    {
+      label: 'Файл', 
+      submenu: [
+        // { label: 'Создать', click() { /* Ваш код для создания файла */ } }, // "New"
+        // { label: 'Открыть', click() { /* Ваш код для открытия файла */ } }, // "Open"
+        // { label: 'Сохранить', click() { /* Ваш код для сохранения файла */ } }, // "Save"
+        // { label: 'Сохранить как...', click() { /* Ваш код для сохранения файла под новым именем */ } }, // "Save As"
+        // { type: 'separator' },
+        { label: 'Выход', role: 'quit' } // "Quit"
+      ]
+    },
+    {
+      label: 'Правка', // "Edit"
+      submenu: [
+        { label: 'Отменить', role: 'undo' },  // "Undo"
+        { label: 'Повторить', role: 'redo' }, // "Redo"
+        { type: 'separator' },
+        { label: 'Вырезать', role: 'cut' },   // "Cut"
+        { label: 'Копировать', role: 'copy' }, // "Copy"
+        { label: 'Вставить', role: 'paste' },  // "Paste"
+        { label: 'Выбрать все', role: 'selectAll' } // "Select All"
+      ]
+    },
+    {
+      label: 'Вид',
+      submenu: [
+        { label: 'Обновить', role: 'reload' },           // "Reload"
+        { label: 'Перезагрузить', role: 'forceReload' }, // "Force Reload"
+        { type: 'separator' },
+        { label: 'Масштаб по умолчанию', role: 'resetZoom' }, // "Actual Size"
+        { label: 'Увеличить', role: 'zoomIn' },               // "Zoom In"
+        { label: 'Уменьшить', role: 'zoomOut' },              // "Zoom Out"
+        { type: 'separator' },
+        { label: 'На весь экран', role: 'togglefullscreen' } // "Toggle Full Screen"
+      ]
+    },
+    {
+      label: 'Окно', // "Window"
+      submenu: [
+        { label: 'Свернуть', role: 'minimize' }, // "Minimize"
+        { label: 'Закрыть', role: 'close' }      // "Close"
+      ]
+    },
+    {
+      label: 'Помощь', 
+      submenu: [
+        { label: 'О программе', role: 'about' } // "About"
+      ]
+    }
+  ];
 
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
+}
 app.on('ready', () => {
   createMainWindow();
   createAuthWindow();
+  createCustomMenu();
+
 });
 
 app.on('window-all-closed', () => {
@@ -33,5 +91,7 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createMainWindow();
     createAuthWindow();
+    createCustomMenu();
+
   }
 });

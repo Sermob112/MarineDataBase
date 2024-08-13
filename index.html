@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -8,5 +7,13 @@
 <body>
   <h1>Добро пожаловать!</h1>
   <p>Это основное окно вашего приложения.</p>
+  <button id="adminBtn">Перейти на страницу администратора</button>
+
+  <script>
+    // Скрипт для перехода на страницу администратора
+    document.getElementById('adminBtn').addEventListener('click', () => {
+      window.location.href = 'admin.html';
+    });
+  </script>
 </body>
 </html>
