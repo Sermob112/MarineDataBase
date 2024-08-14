@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ панель</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Пользователи и их роли</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Имя пользователя</th>
+                <th>Роли</th>
+            </tr>
+        </thead>
+        <tbody id="userTableBody">
+            <!-- Пользователи будут добавлены сюда -->
+        </tbody>
+    </table>
+
+       
+   
+    <script src="assets/js/adminScripts.js"></script>
+</body>
+</html>

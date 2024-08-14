@@ -23,7 +23,7 @@ function createAuthWindow() {
     frame: false,
   });
 
-  authWindow.loadFile('auth.html');
+  authWindow.loadFile('renderer/auth.html');
 
   authWindow.once('ready-to-show', () => {
     authWindow.show();
