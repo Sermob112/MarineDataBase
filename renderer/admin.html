@@ -34,8 +34,41 @@
         </tbody>
     </table>
 
-       
-   
+    <h2>Добавить нового пользователя</h2>
+    <form id="addUserForm">
+        <input type="text" id="username" placeholder="Имя пользователя" required>
+        <input type="password" id="password" placeholder="Пароль" required>
+    
+        <label for="roles">Выберите роли:</label>
+        <select id="roles" multiple>
+            <option value="Администратор">Администратор</option>
+            <option value="Редактор">Редактор</option>
+            <option value="Пользователь">Пользователь</option>
+            <option value="Гость">Гость</option>
+            <!-- Добавьте другие роли по необходимости -->
+        </select>
+    
+        <button type="submit">Добавить пользователя</button>
+    </form>
+    <div id="editUserModal" style="display: none;">
+        <h2>Редактировать пользователя</h2>
+        <form id="editUserForm">
+            <input type="hidden" id="editUserId">
+            <input type="text" id="editUsername" placeholder="Имя пользователя" required>
+            <input type="password" id="editPassword" placeholder="Пароль" required>
+    
+            <label for="editRoles">Выберите роли:</label>
+            <select id="editRoles" multiple>
+                <option value="Администратор">Администратор</option>
+                <option value="Редактор">Редактор</option>
+                <option value="Пользователь">Пользователь</option>
+                <option value="Гость">Гость</option>
+            </select>
+    
+            <button type="submit">Сохранить изменения</button>
+            <button type="button" onclick="closeEditUserModal()">Отмена</button>
+        </form>
+    </div>
     <script src="assets/js/adminScripts.js"></script>
 </body>
 </html>

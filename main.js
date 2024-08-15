@@ -1,6 +1,6 @@
 const { app, BrowserWindow,Menu } = require('electron');
 const { createAuthWindow, setMainWindow } = require('./auth');
-const { setupAdminRoutes, AddUser } = require('./adminBack');
+const { setupAdminRoutes } = require('./adminBack');
 let mainWindow;
 
 function createMainWindow() {
