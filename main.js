@@ -1,8 +1,9 @@
 const { app, BrowserWindow,Menu } = require('electron');
 const { createAuthWindow, setMainWindow } = require('./auth');
 const { setupAdminRoutes } = require('./adminBack');
+const { UserLog } = require('./models'); // Подключаем модель UserLog
 let mainWindow;
-
+let currentUser = null;
 function createMainWindow() {
   mainWindow = new BrowserWindow({
     width: 800,
@@ -75,6 +76,7 @@ function createCustomMenu() {
   const menu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(menu);
 }
+
 app.on('ready', () => {
   createMainWindow();
   createAuthWindow();
@@ -83,6 +85,7 @@ app.on('ready', () => {
 
 
 });
+
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

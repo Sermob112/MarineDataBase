@@ -1,5 +1,5 @@
 const { BrowserWindow, ipcMain, app } = require('electron');
-const { User } = require('./models'); 
+const { User, UserLog} = require('./models'); 
 const { initializeDatabase } = require('./initialize_db');
 let authWindow;
 let mainWindow;
@@ -49,16 +49,25 @@ function createAuthWindow() {
 
   ipcMain.on('auth-submit', async (event, credentials) => {
     const { username, password } = credentials;
-
+  
     try {
-        const user = await User.findOne({ where: { username, password } });
-        if (user) {
-            event.sender.send('login-success');
-        } else {
-            event.sender.send('auth-failure', 'Неверный логин или пароль.');
-        }
+      const user = await User.findOne({ where: { username, password } });
+      if (user) {
+        // Добавляем запись в лог после успешной авторизации
+        const loginLog = await UserLog.create({
+          username: user.username,
+          login_time: new Date(), // Текущее время для записи времени входа
+        });
+  
+        // Сохраняем ID логирования, чтобы позже обновить время выхода
+        event.sender.session.userLogId = loginLog.Id;
+  
+        event.sender.send('login-success');
+      } else {
+        event.sender.send('auth-failure', 'Неверный логин или пароль.');
+      }
     } catch (error) {
-        event.sender.send('auth-failure', 'Ошибка авторизации.');
+      event.sender.send('auth-failure', 'Ошибка авторизации.');
     }
   });
 
@@ -72,7 +81,25 @@ function createAuthWindow() {
     }
   });
 }
+ipcMain.on('logout', async (event) => {
+  try {
+    const logId = event.sender.session.userLogId;
+    if (logId) {
+      await UserLog.update(
+        { logout_time: new Date() }, // Текущее время для времени выхода
+        { where: { Id: logId } }
+      );
+    }
 
+    // Закрываем основное окно и открываем окно авторизации
+    if (mainWindow) {
+      mainWindow.hide();
+    }
+    createAuthWindow();
+  } catch (error) {
+    console.error('Ошибка при выходе из системы:', error);
+  }
+});
 module.exports = {
   createAuthWindow,
   setMainWindow: (window) => { mainWindow = window; }

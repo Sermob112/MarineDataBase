@@ -1,5 +1,5 @@
 const { ipcMain } = require('electron');
-const { User, Role } = require('./models');
+const { User, Role, UserLog } = require('./models');
 
 function setupAdminRoutes() {
   ipcMain.handle('get-users-with-roles', async () => {
@@ -87,6 +87,15 @@ function setupAdminRoutes() {
         console.error('Ошибка при редактировании пользователя:', error);
         return { success: false, message: 'Произошла ошибка при редактировании пользователя' };
     }
+});
+ipcMain.handle('get-user-logs', async () => {
+  try {
+    const logs = await UserLog.findAll();
+    return logs.map(log => log.toJSON()); // Преобразуем Sequelize объекты в простые JSON
+  } catch (error) {
+    console.error('Ошибка при получении журнала пользователей:', error);
+    throw error;
+  }
 });
 }
 
