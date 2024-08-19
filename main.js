@@ -16,8 +16,29 @@ function createMainWindow() {
     show: false // не показывать основное окно сразу
   });
 
+  mainWindow.on('close', async (event) => {
+    if (mainWindow && mainWindow.webContents.session.userLogId) {
+      event.preventDefault();
+      try {
+        await UserLog.update(
+          { logout_time: new Date() },
+          { where: { Id: mainWindow.webContents.session.userLogId } }
+        );
+        // После обновления лога, закрываем все окна и выходим
+        BrowserWindow.getAllWindows().forEach(win => win.destroy());
+        app.quit();
+      } catch (error) {
+        console.error('Ошибка при обновлении времени выхода:', error);
+        app.quit();
+      }
+    } else {
+      app.quit();
+    }
+  });
+
   mainWindow.loadFile('renderer/index.html');
   setMainWindow(mainWindow); 
+
 }
 // Функция для создания кастомного меню
 function createCustomMenu() {
@@ -85,7 +106,25 @@ app.on('ready', () => {
 
 
 });
-
+app.on('before-quit', async (event) => {
+  if (mainWindow && mainWindow.webContents.session.userLogId) {
+      event.preventDefault();
+      try {
+          await UserLog.update(
+              { logout_time: new Date() },
+              { where: { Id: mainWindow.webContents.session.userLogId } }
+          );
+          // После обновления лога, закрываем все окна и выходим
+          BrowserWindow.getAllWindows().forEach(win => win.destroy());
+          app.quit();
+      } catch (error) {
+          console.error('Ошибка при обновлении времени выхода:', error);
+          app.quit();
+      }
+  } else {
+      app.quit();
+  }
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

@@ -71,13 +71,16 @@ function createAuthWindow() {
     }
   });
 
-  ipcMain.on('login-success', () => {
+  ipcMain.on('login-success', (event) => {
     if (authWindow) {
       authWindow.close();
       authWindow = null;
     }
     if (mainWindow) {
       mainWindow.show();
+      // Передаем информацию о текущем пользователе в mainWindow
+      mainWindow.webContents.session.currentUser = event.sender.session.currentUser; // Предполагая, что вы где-то сохраняете текущего пользователя
+      mainWindow.webContents.session.userLogId = event.sender.session.userLogId;
     }
   });
 }
@@ -102,5 +105,11 @@ ipcMain.on('logout', async (event) => {
 });
 module.exports = {
   createAuthWindow,
-  setMainWindow: (window) => { mainWindow = window; }
+  setMainWindow: (window) => {
+    mainWindow = window;
+    // Убедитесь, что у mainWindow есть доступ к session
+    if (!mainWindow.webContents.session) {
+      mainWindow.webContents.session = { currentUser: null, userLogId: null };
+    }
+  }
 };
