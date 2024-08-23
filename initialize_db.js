@@ -1,4 +1,5 @@
 const { sequelize, MarinFleet, User, Role, UserRole, UserLog, ChangedDate } = require('./models');
+
 const { Sequelize } = require('sequelize');
 const systemDb = new Sequelize('postgres', 'postgres', 'sa', {
 host: 'localhost',
