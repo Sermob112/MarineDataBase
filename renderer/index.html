@@ -1,19 +1,39 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="assets/css/admin.css"> <!-- Подключение CSS файла -->
   <title>Основное окно</title>
 </head>
 <body>
   <h1>Добро пожаловать!</h1>
   <p>Это основное окно вашего приложения.</p>
-  <button id="adminBtn">Перейти на страницу администратора</button>
 
+  <div class="tab-content active" id="ships">
+    <h2>Список судов</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Название корабля</th>
+                <th>Проект</th>
+                <th>Регистровый номер</th>
+            </tr>
+        </thead>
+        <tbody id="shipsTableBody">
+          <!-- Данные журнала будут добавлены сюда -->
+      </tbody>
+    </table>
+  </div>
+
+  <button id="adminBtn">Перейти на страницу администратора</button>
   <script>
     // Скрипт для перехода на страницу администратора
     document.getElementById('adminBtn').addEventListener('click', () => {
       window.location.href = 'admin.html';
     });
   </script>
+  <script src="assets/js/index.js"></script>
 </body>
 </html>
