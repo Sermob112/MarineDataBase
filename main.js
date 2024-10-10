@@ -1,9 +1,11 @@
 const { app, BrowserWindow,Menu } = require('electron');
-const { createAuthWindow, setMainWindow } = require('./auth');
-const { setupAdminRoutes } = require('./adminBack');
+const  Auth  = require('./auth');
+const  AdminRoutes  = require('./adminBack');
 const { UserLog } = require('./models'); // Подключаем модель UserLog
 let mainWindow;
 let currentUser = null;
+const auth = new Auth();
+const adminRotes = new AdminRoutes();
 function createMainWindow() {
   mainWindow = new BrowserWindow({
     width: 800,
@@ -37,7 +39,7 @@ function createMainWindow() {
   });
 
   mainWindow.loadFile('renderer/index.html');
-  setMainWindow(mainWindow); 
+  auth.setMainWindow(mainWindow); 
 
 }
 // Функция для создания кастомного меню
@@ -100,9 +102,9 @@ function createCustomMenu() {
 
 app.on('ready', () => {
   createMainWindow();
-  createAuthWindow();
+  auth.createAuthWindow();
   createCustomMenu();
-  setupAdminRoutes();
+
 
 
 });
@@ -135,7 +137,7 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createMainWindow();
-    createAuthWindow();
+    auth.createAuthWindow();
     createCustomMenu();
 
   }

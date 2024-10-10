@@ -135,4 +135,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+async function deleteUser(userId) {
+    try {
+        // Отправляем запрос на удаление пользователя через ipcRenderer
+        const response = await ipcRenderer.invoke('delete-user', userId);
+        
+        if (response.success) {
+            // Обновляем список пользователей после успешного удаления
+            loadUsers();
+        } else {
+            console.error('Ошибка при удалении пользователя:', response.message);
+        }
+    } catch (error) {
+        console.error('Произошла ошибка при удалении пользователя:', error);
+    }
+}
 loadUsers();
