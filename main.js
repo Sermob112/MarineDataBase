@@ -3,7 +3,7 @@ const Auth = require('./auth');
 const AdminRoutes = require('./adminBack');
 const WindowManager = require('./windowManager');
 const createCustomMenu = require('./menuManager');
-const  importCsvToDb = require('./csvReader')
+// const  importCsvToDatabase = require('./csvReader')
 const auth = new Auth();
 const adminRoutes = new AdminRoutes();
 const windowManager = new WindowManager(auth);
@@ -12,7 +12,7 @@ app.on('ready', () => {
   windowManager.createMainWindow();
   auth.createAuthWindow();
   createCustomMenu();
-  // importCsvToDb();
+  // importCsvToDatabase();
 });
 
 app.on('before-quit', async (event) => {

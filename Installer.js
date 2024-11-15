@@ -13,14 +13,14 @@ async function initializeDatabase() {
     });
     
     const MarinFleet = sequelize.define('MarinFleet', {
-        reg_no: { type: DataTypes.STRING, allowNull: false },
-        name: { type: DataTypes.STRING, allowNull: false },
-        building_no: { type: DataTypes.STRING, allowNull: false },
-        project: { type: DataTypes.STRING, allowNull: false },
-        type_and_purpose: { type: DataTypes.STRING, allowNull: false },
+        reg_no: { type: DataTypes.TEXT, allowNull: false },
+        name: { type: DataTypes.TEXT, allowNull: false },
+        building_no: { type: DataTypes.TEXT, allowNull: false },
+        project: { type: DataTypes.TEXT, allowNull: false },
+        type_and_purpose: { type: DataTypes.TEXT, allowNull: false },
         build_date: { type: DataTypes.DATEONLY, allowNull: false },
-        build_place: { type: DataTypes.STRING, allowNull: false },
-        class_formula: { type: DataTypes.STRING, allowNull: false },
+        build_place: { type: DataTypes.TEXT, allowNull: false },
+        class_formula: { type: DataTypes.TEXT, allowNull: false },
         overall_length: { type: DataTypes.FLOAT, allowNull: false },
         structural_length: { type: DataTypes.FLOAT, allowNull: false },
         overall_width: { type: DataTypes.FLOAT, allowNull: false },
@@ -36,16 +36,16 @@ async function initializeDatabase() {
         longitudinal_bulkheads: { type: DataTypes.INTEGER, allowNull: false },
         passenger_capacity: { type: DataTypes.INTEGER, allowNull: false },
         crew: { type: DataTypes.INTEGER, allowNull: false },
-        organization_group: { type: DataTypes.STRING, allowNull: false },
+        organization_group: { type: DataTypes.TEXT, allowNull: false },
         cargo_tanks: { type: DataTypes.INTEGER, allowNull: false },
         total_tank_volume: { type: DataTypes.FLOAT, allowNull: false },
         crane_capacity_1: { type: DataTypes.FLOAT, allowNull: false },
         crane_capacity_2: { type: DataTypes.FLOAT, allowNull: false },
         crane_capacity_3: { type: DataTypes.FLOAT, allowNull: false },
-        hull_material: { type: DataTypes.STRING, allowNull: false },
-        superstructure_material: { type: DataTypes.STRING, allowNull: false },
-        main_engine_type: { type: DataTypes.STRING, allowNull: false },
-        main_engine_brand: { type: DataTypes.STRING, allowNull: false },
+        hull_material: { type: DataTypes.TEXT, allowNull: false },
+        superstructure_material: { type: DataTypes.TEXT, allowNull: false },
+        main_engine_type: { type: DataTypes.TEXT, allowNull: false },
+        main_engine_brand: { type: DataTypes.TEXT, allowNull: false },
         main_engine_power: { type: DataTypes.FLOAT, allowNull: false },
         main_engine_count: { type: DataTypes.INTEGER, allowNull: false },
         total_engine_power: { type: DataTypes.FLOAT, allowNull: false },
@@ -59,8 +59,8 @@ async function initializeDatabase() {
     
     const User = sequelize.define('User', {
         id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-        username: { type: DataTypes.STRING, unique: true, allowNull: false },
-        password: { type: DataTypes.STRING, allowNull: false },
+        username: { type: DataTypes.TEXT, unique: true, allowNull: false },
+        password: { type: DataTypes.TEXT, allowNull: false },
     }, {
         tableName: 'User',
         timestamps: false
@@ -68,7 +68,7 @@ async function initializeDatabase() {
     
     const Role = sequelize.define('Role', {
         id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-        name: { type: DataTypes.STRING, allowNull: false },
+        name: { type: DataTypes.TEXT, allowNull: false },
     }, {
         tableName: 'Role',
         timestamps: false
@@ -93,7 +93,7 @@ async function initializeDatabase() {
     
     const UserLog = sequelize.define('UserLog', {
         Id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-        username: { type: DataTypes.STRING, allowNull: false },
+        username: { type: DataTypes.TEXT, allowNull: false },
         login_time: { type: DataTypes.DATE, allowNull: false },
         logout_time: { type: DataTypes.DATE, allowNull: true },
     }, {
@@ -103,12 +103,12 @@ async function initializeDatabase() {
     
     const ChangedDate = sequelize.define('ChangedDate', {
         id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-        RegistryNumber: { type: DataTypes.STRING, allowNull: false },
-        username: { type: DataTypes.STRING, allowNull: false },
+        RegistryNumber: { type: DataTypes.TEXT, allowNull: false },
+        username: { type: DataTypes.TEXT, allowNull: false },
         chenged_time: { type: DataTypes.DATE, allowNull: false },
-        PurchaseName: { type: DataTypes.STRING, allowNull: true },
-        Role: { type: DataTypes.STRING, allowNull: true },
-        Type: { type: DataTypes.STRING, allowNull: true },
+        PurchaseName: { type: DataTypes.TEXT, allowNull: true },
+        Role: { type: DataTypes.TEXT, allowNull: true },
+        Type: { type: DataTypes.TEXT, allowNull: true },
     }, {
         tableName: 'ChangedDate',
         timestamps: false
