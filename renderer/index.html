@@ -7,33 +7,29 @@
   <title>Основное окно</title>
 </head>
 <body>
-  <h1>Добро пожаловать!</h1>
-  <p>Это основное окно вашего приложения.</p>
-
-  <div class="tab-content active" id="ships">
-    <h2>Список судов</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Название корабля</th>
-                <th>Проект</th>
-                <th>Регистровый номер</th>
-            </tr>
-        </thead>
-        <tbody id="shipsTableBody">
-          <!-- Данные журнала будут добавлены сюда -->
-      </tbody>
-    </table>
+  <div class="sidebar">
+    <h2>Меню</h2>
+    <ul>
+      <li><a href="#">Главная</a></li>
+      <li><a href="#ships">Список судов</a></li>
+      <li><a href="admin.html">Администратор</a></li>
+    </ul>
   </div>
-
-  <button id="adminBtn">Перейти на страницу администратора</button>
-  <script>
-    // Скрипт для перехода на страницу администратора
-    document.getElementById('adminBtn').addEventListener('click', () => {
-      window.location.href = 'admin.html';
-    });
-  </script>
-  <script src="assets/js/index.js"></script>
+  <table id="ship-table" border="1">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Vessel Name</th>
+        <th>IMO Number</th>
+        <th>Registry</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Данные будут добавляться динамически -->
+    </tbody>
+  </table>
+ <script src="assets/js/index.js"></script>
+ <script src="assets/js/shipBackScripts.js"></script>
 </body>
 </html>

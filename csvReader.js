@@ -411,7 +411,7 @@ async function importVesselData() {
         });
 }
 
-importVesselData();
+// importVesselData();
 
 
 // module.exports = importCsvToDatabase;

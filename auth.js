@@ -88,6 +88,7 @@ class Auth {
         this.authWindow = null;
       }
       if (this.mainWindow) {
+        this.mainWindow.maximize();
         this.mainWindow.show();
         this.mainWindow.webContents.session.currentUser = event.sender.session.currentUser;
         this.mainWindow.webContents.session.userLogId = event.sender.session.userLogId;

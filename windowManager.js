@@ -9,15 +9,14 @@ class WindowManager {
 
   createMainWindow() {
     this.mainWindow = new BrowserWindow({
-      width: 800,
-      height: 600,
+
       webPreferences: {
         nodeIntegration: true,
         contextIsolation: false,
       },
       show: false,
     });
-
+    
     this.mainWindow.on('close', this.handleClose.bind(this));
     this.mainWindow.loadFile('renderer/index.html');
     this.auth.setMainWindow(this.mainWindow);

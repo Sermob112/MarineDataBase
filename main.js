@@ -1,12 +1,14 @@
 const { app } = require('electron');
 const Auth = require('./auth');
-const AdminRoutes = require('./adminBack');
+const AdminRoutes = require('./back/adminBack');
 const WindowManager = require('./windowManager');
 const createCustomMenu = require('./menuManager');
-// const  importCsvToDatabase = require('./csvReader')
+const ShipBaseBack = require('./back/shipBaseBack');
 const auth = new Auth();
 const adminRoutes = new AdminRoutes();
 const windowManager = new WindowManager(auth);
+new ShipBaseBack();
+
 
 app.on('ready', () => {
   windowManager.createMainWindow();
