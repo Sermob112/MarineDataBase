@@ -29,24 +29,26 @@ async function loadShipData() {
       registryCell.textContent = ship.reg_number; // Предполагаем, что у вас есть поле registry
 
       // Создаем ячейку для действий
-      const actionsCell = document.createElement('td');
-      const editButton = document.createElement('button');
-      editButton.textContent = 'Edit';
-      editButton.onclick = () => editShip(ship.id); // Функция редактирования
-      actionsCell.appendChild(editButton);
+      // const actionsCell = document.createElement('td');
+      // const editButton = document.createElement('button');
+      // editButton.textContent = 'Edit';
+      // editButton.onclick = () => editShip(ship.id); // Функция редактирования
+      // actionsCell.appendChild(editButton);
 
-      const deleteButton = document.createElement('button');
-      deleteButton.textContent = 'Delete';
-      deleteButton.onclick = () => deleteShip(ship.id); // Функция удаления
-      actionsCell.appendChild(deleteButton);
+      // const deleteButton = document.createElement('button');
+      // deleteButton.textContent = 'Delete';
+      // deleteButton.onclick = () => deleteShip(ship.id); // Функция удаления
+      // actionsCell.appendChild(deleteButton);
 
       // Добавляем ячейки в строку
       row.appendChild(idCell);
       row.appendChild(nameCell);
       row.appendChild(imoCell);
       row.appendChild(registryCell);
-      row.appendChild(actionsCell);
-
+      // row.appendChild(actionsCell);
+      row.addEventListener('click', () => {
+        viewDetails(ship.id); // Функция для перехода на страницу подробностей
+      });
       // Добавляем строку в tbody
       tbody.appendChild(row);
     });
@@ -54,7 +56,7 @@ async function loadShipData() {
     console.error('Ошибка при загрузке данных судов:', error);
   }
 }
-
+loadShipData();
 // Функция для редактирования судна
 function editShip(shipId) {
   // Здесь вы можете добавить логику для редактирования судна
@@ -77,6 +79,12 @@ async function deleteShip(shipId) {
     }
   }
 }
-
+function viewDetails(shipId) {
+  // Передаем ID судна через IPC и перенаправляем на другую страницу
+  ipcRenderer.invoke('load-ship-details', shipId).then(() => {
+    window.location.href = 'shipFormular.html'; // Переход на страницу подробностей
+  }).catch(error => {
+    console.error('Ошибка при загрузке деталей судна:', error);
+  });
+}
 // Загружаем данные при инициализации
-loadShipData();

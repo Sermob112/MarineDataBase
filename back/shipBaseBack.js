@@ -11,6 +11,8 @@ class ShipBaseBack {
     ipcMain.handle('add-ship', this.addShip.bind(this));
     ipcMain.handle('delete-ship', this.deleteShip.bind(this));
     ipcMain.handle('edit-ship', this.editShip.bind(this));
+    ipcMain.handle('get-selected-ship', this.getSelectedShip.bind(this));
+    ipcMain.handle('load-ship-details', this.loadShipDetails.bind(this));
   }
 
   // Получение всех данных из базы
@@ -65,6 +67,17 @@ class ShipBaseBack {
       console.error('Ошибка при обновлении данных судна:', error);
       throw error;
     }
+  }
+  async getSelectedShip() {
+    if (this.selectedShip) {
+      return this.selectedShip.toJSON();
+    } else {
+      throw new Error('Судно не выбрано');
+    }
+  }
+
+  async loadShipDetails(event, shipId) {
+    this.selectedShip = await MarinFleet.findByPk(shipId);
   }
 }
 
