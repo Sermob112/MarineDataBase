@@ -3,10 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="assets/css/admin.css"> <!-- Подключение CSS файла -->
+  <link rel="stylesheet" href="assets/css/base.css"> <!-- Подключение CSS файла -->
   <title>Основное окно</title>
 </head>
 <body>
+  <div class="top-panel">
+    <h1>Верхняя панель</h1>
+    <p>Тут может быть информация или элементы управления.</p>
+  </div>
+ 
   <div class="sidebar">
     <h2>Меню</h2>
     <ul>
@@ -17,20 +22,23 @@
     </ul>
   </div>
   <button class="sidebar-toggle">⟨</button>
+  <div class="overlay"></div>
   <table id="ship-table" border="1">
     <thead>
       <tr>
-        <th>ID</th>
-        <th>Vessel Name</th>
-        <th>IMO Number</th>
-        <th>Registry</th>
-        <th>Actions</th>
+        <th>№</th>
+        <th>Название судна</th>
+        <th>Регистровый номер</th>
+        <th>Номер ИМО</th>
+      
+    
       </tr>
     </thead>
     <tbody>
       <!-- Данные будут добавляться динамически -->
     </tbody>
   </table>
+
  <script src="assets/js/indexScripts.js"></script>
  <script src="assets/js/shipBackScripts.js"></script>
 </body>

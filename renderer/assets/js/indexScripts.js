@@ -1,19 +1,27 @@
 document.addEventListener('DOMContentLoaded', () => {
     const sidebar = document.querySelector('.sidebar');
     const toggleButton = document.querySelector('.sidebar-toggle');
-    const shipTable = document.querySelector('#ship-table');
+    const overlay = document.querySelector('.overlay');
 
     toggleButton.addEventListener('click', () => {
-        sidebar.classList.toggle('hidden');
-        toggleButton.textContent = sidebar.classList.contains('hidden') ? '⟩' : '⟨';
+        const isActive = sidebar.classList.toggle('active');
+        overlay.classList.toggle('active', isActive);
 
-        // Обновление состояния таблицы
-        if (sidebar.classList.contains('hidden')) {
-            shipTable.style.marginLeft = '20px';
-            shipTable.style.width = 'calc(100% - 40px)';
+        // Изменяем положение кнопки
+        if (isActive) {
+            toggleButton.style.left = '190px';
+            toggleButton.textContent = '⟨';
         } else {
-            shipTable.style.marginLeft = '260px';
-            shipTable.style.width = 'calc(100% - 260px)';
+            toggleButton.style.left = '20px';
+            toggleButton.textContent = '⟩';
         }
+    });
+
+    // Закрытие сайдбара при клике на затемнение
+    overlay.addEventListener('click', () => {
+        sidebar.classList.remove('active');
+        overlay.classList.remove('active');
+        toggleButton.style.left = '20px';
+        toggleButton.textContent = '⟩';
     });
 });
