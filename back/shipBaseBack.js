@@ -1,12 +1,13 @@
 const { ipcMain } = require('electron');
 const { MarinFleet } = require('../models');
-
+const { Op } = require('sequelize');
 class ShipBaseBack {
   constructor() {
     this.setupRoutes();
   }
 
   setupRoutes() {
+    ipcMain.handle('search-ship', this.searchShips.bind(this));
     ipcMain.handle('get-ship-data', this.getShipData.bind(this));
     ipcMain.handle('add-ship', this.addShip.bind(this));
     ipcMain.handle('delete-ship', this.deleteShip.bind(this));
@@ -79,6 +80,24 @@ class ShipBaseBack {
   async loadShipDetails(event, shipId) {
     this.selectedShip = await MarinFleet.findByPk(shipId);
   }
+
+  async searchShips(event, query) {
+    try {
+        // Преобразуем запрос к нижнему регистру
+        const ships = await MarinFleet.findAll({
+            where: {
+                vessel_name: {
+                    [Op.like]: `%${query}%` 
+                }
+            }
+        });
+        // Преобразуем найденные записи в JSON
+        return ships.map(ship => ship.toJSON());
+    } catch (error) {
+        console.error('Ошибка при поиске судов:', error);
+        throw error;
+    }
+}
 }
 
 module.exports = ShipBaseBack;

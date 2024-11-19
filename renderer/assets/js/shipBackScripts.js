@@ -2,16 +2,13 @@ const { ipcRenderer } = require('electron');
 
 async function loadShipData() {
   try {
-    // Запрос данных о судах
+
     const ships = await ipcRenderer.invoke('get-ship-data');
     
-    // Получаем ссылку на tbody
     const tbody = document.querySelector('#ship-table tbody');
 
-    // Очищаем tbody перед добавлением новых данных
     tbody.innerHTML = '';
 
-    // Добавляем данные о судах в таблицу
     ships.forEach(ship => {
       const row = document.createElement('tr');
 
@@ -56,7 +53,42 @@ async function loadShipData() {
     console.error('Ошибка при загрузке данных судов:', error);
   }
 }
+
 loadShipData();
+
+document.getElementById('search-input').addEventListener('input', async event => {
+  const query = event.target.value; // Получаем введенный текст
+  try {
+      const ships = await ipcRenderer.invoke('search-ship', query); // Запрашиваем данные на сервере
+      updateTable(ships); // Обновляем таблицу с результатами
+  } catch (error) {
+      console.error('Ошибка при поиске судов:', error);
+  }
+});
+
+function updateTable(ships) {
+  const tbody = document.querySelector('#ship-table tbody');
+  tbody.innerHTML = ''; // Очищаем таблицу
+
+  ships.forEach(ship => {
+      const row = document.createElement('tr');
+
+      const idCell = document.createElement('td');
+      idCell.textContent = ship.id;
+
+      const nameCell = document.createElement('td');
+      nameCell.textContent = ship.vessel_name;
+
+      const registryCell = document.createElement('td');
+      registryCell.textContent = ship.reg_number;
+
+      row.appendChild(idCell);
+      row.appendChild(nameCell);
+      row.appendChild(registryCell);
+      tbody.appendChild(row);
+  });
+}
+
 // Функция для редактирования судна
 function editShip(shipId) {
   // Здесь вы можете добавить логику для редактирования судна

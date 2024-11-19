@@ -3,23 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="assets/css/admin.css">
+  <link rel="stylesheet" href="assets/css/base.css">
   <title>Ship Details</title>
 
 </head>
 <body>
-
+  <div class="top-panel">
+    <h1>Верхняя панель</h1>
+    <p>Тут может быть информация или элементы управления.</p>
+  </div>
+ 
+  <div class="sidebar">
+    <h2>Меню</h2>
+    <ul>
+      <li><a href="#">Главная</a></li>
+      <li><a href="index.html">Список судов</a></li>
+      <li><a href="admin.html">Администратор</a></li>
+      <li><a href="shipFormular.html">Тест судов</a></li>
+    </ul>
+  </div>
+  <button class="sidebar-toggle">⟨</button>
+  <div class="overlay"></div>
 
  <table id="shipTable">
     <thead>
       <tr>
-        <th>Field</th>
-        <th>Value</th>
+        <th>Название поля</th>
+        <th>Значение</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
  <div id="recordStatus"></div>
   <script src="assets/js/formularScripts.js"></script>
+  <script src="assets/js/indexScripts.js"></script>
 </body>
 </html>

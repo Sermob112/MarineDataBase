@@ -162,17 +162,19 @@ table {
     width: 100%;
     border-collapse: collapse;
     margin-bottom: 20px;
+    border: 1px solid #ddd;
 }
 
 th, td {
     padding: 10px;
     text-align: left;
-    border-bottom: 1px solid #ddd;
+    border: 1px solid #ddd;
 }
 
 th {
     background-color: #007bff;
     color: #fff;
+   
 }
 #ship-table {
   
@@ -229,3 +231,4 @@ th {
     opacity: 1;
     pointer-events: auto;
 }
+
