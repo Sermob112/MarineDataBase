@@ -17,9 +17,14 @@ class ShipBaseBack {
   }
 
   // Получение всех данных из базы
-  async getShipData() {
+  async getShipData(event, { offset = 0, batchSize = 50 }) {
     try {
-      const ships = await MarinFleet.findAll();
+      // Параметризуем запрос
+      const ships = await MarinFleet.findAll({
+        offset, // Смещение
+        limit: batchSize, // Количество записей
+        order: [['id', 'ASC']] // Упорядочиваем по id
+      });
       return ships.map(ship => ship.toJSON());
     } catch (error) {
       console.error('Ошибка при получении данных судов:', error);

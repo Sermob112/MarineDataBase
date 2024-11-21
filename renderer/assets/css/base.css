@@ -157,6 +157,11 @@ button:hover {
 }
 
 /* ТАБЛИЦА */
+
+#table-container {
+    overflow-y: auto; /* Прокрутка для таблицы, если она выходит за границы контейнера */
+    border: 1px solid #ccc; /* Граница вокруг таблицы */
+  }
 table {
     margin-top: 10px;
     width: 100%;
@@ -172,6 +177,9 @@ th, td {
 }
 
 th {
+    top: 0;
+      z-index: 1;
+    position: sticky; /* Фиксирует заголовок при прокрутке */
     background-color: #007bff;
     color: #fff;
    
