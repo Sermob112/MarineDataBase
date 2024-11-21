@@ -76,33 +76,49 @@ class ShipBaseBack {
   }
   async getSelectedShip() {
     if (this.selectedShip) {
-      return this.selectedShip.toJSON();
+      const ships = await MarinFleet.findAll();
+      return {
+        selectedShip: this.selectedShip.toJSON(),
+        totalShips: ships.length,
+      };
     } else {
       throw new Error('Судно не выбрано');
     }
   }
+  
 
   async loadShipDetails(event, shipId) {
     this.selectedShip = await MarinFleet.findByPk(shipId);
+    
   }
 
   async searchShips(event, query) {
     try {
-        // Преобразуем запрос к нижнему регистру
-        const ships = await MarinFleet.findAll({
-            where: {
-                vessel_name: {
-                    [Op.like]: `%${query}%` 
-                }
-            }
-        });
-        // Преобразуем найденные записи в JSON
-        return ships.map(ship => ship.toJSON());
+      // Общее количество записей в базе
+      const totalRecords = await MarinFleet.count();
+  
+      // Условие для поиска
+      const whereCondition = query
+        ? { vessel_name: { [Op.like]: `%${query}%` } }
+        : {};
+  
+      // Количество записей, соответствующих запросу
+      const filteredCount = await MarinFleet.count({ where: whereCondition });
+  
+      // Найденные записи
+      const ships = await MarinFleet.findAll({ where: whereCondition });
+  
+      return {
+        totalRecords,       // Общее количество записей в базе
+        filteredCount,      // Количество записей, соответствующих запросу
+        ships: ships.map(ship => ship.toJSON()), // Найденные записи
+      };
     } catch (error) {
-        console.error('Ошибка при поиске судов:', error);
-        throw error;
+      console.error('Ошибка при поиске судов:', error);
+      throw error;
     }
-}
+  }
+  
 }
 
 module.exports = ShipBaseBack;

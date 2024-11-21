@@ -105,11 +105,13 @@ const fieldTranslations  = {
 
 async function loadShipDetails() {
   try {
-    const ship = await ipcRenderer.invoke('get-selected-ship');
+    const { selectedShip, totalShips } = await ipcRenderer.invoke('get-selected-ship');
     const tbody = document.querySelector('#shipTable tbody');
     tbody.innerHTML = '';
 
-    Object.entries(ship).forEach(([key, value]) => {
+
+
+    Object.entries(selectedShip).forEach(([key, value]) => {
       const translatedKey = Object.keys(fieldTranslations).find(
         (rusKey) => fieldTranslations[rusKey] === key
       );
@@ -130,11 +132,12 @@ async function loadShipDetails() {
     });
 
     const recordStatus = document.getElementById('recordStatus');
-    recordStatus.textContent = `Запись ID: ${ship.id} из `;
+    recordStatus.textContent = `Запись ID: ${selectedShip.id} из ${totalShips} записей`;
   } catch (error) {
     console.error('Ошибка при загрузке деталей судна:', error);
   }
 }
+
 
 // Загружаем детали при открытии страницы
 loadShipDetails();

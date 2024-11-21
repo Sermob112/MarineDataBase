@@ -11,11 +11,11 @@ async function loadShipData() {
   loading = true;
 
   try {
-    // Запрашиваем следующую партию данных
+
     const ships = await ipcRenderer.invoke('get-ship-data', { offset, batchSize });
 
     if (ships.length < batchSize) {
-      hasMoreData = false; // Если записей меньше, чем batchSize, данных больше нет
+      hasMoreData = false; 
     }
 
     const tbody = document.querySelector('#ship-table tbody');
@@ -54,26 +54,28 @@ async function loadShipData() {
   }
 }
 
-// Обработчик события прокрутки
+
 const tableContainer = document.querySelector('#table-container');
 tableContainer.addEventListener('scroll', () => {
   const { scrollTop, scrollHeight, clientHeight } = tableContainer;
 
-  // Если прокрутка почти достигла низа контейнера, загружаем данные
+
   if (scrollTop + clientHeight >= scrollHeight - 10) {
     loadShipData();
   }
 });
 
-// Инициализация начальной загрузки
 loadShipData();
 
-// Поиск обновляет таблицу и сбрасывает ленивую загрузку
+
 document.getElementById('search-input').addEventListener('input', async event => {
   const query = event.target.value;
 
   try {
-    const ships = await ipcRenderer.invoke('search-ship', query);
+    // Выполняем поиск через IPC
+    const { totalRecords, filteredCount, ships } = await ipcRenderer.invoke('search-ship', query);
+
+    // Обновляем таблицу
     const tbody = document.querySelector('#ship-table tbody');
     tbody.innerHTML = ''; // Очищаем таблицу
 
@@ -96,6 +98,7 @@ document.getElementById('search-input').addEventListener('input', async event =>
       row.appendChild(nameCell);
       row.appendChild(imoCell);
       row.appendChild(registryCell);
+
       row.addEventListener('click', () => {
         viewDetails(ship.id);
       });
@@ -103,37 +106,17 @@ document.getElementById('search-input').addEventListener('input', async event =>
       tbody.appendChild(row);
     });
 
-    // Сброс значений для ленивой загрузки
-    offset = 0;
-    hasMoreData = true;
+    // Обновляем информацию о результатах
+    const resultInfo = document.getElementById('result-info');
+    resultInfo.textContent = `Найдено ${filteredCount} из ${totalRecords} записей.`;
   } catch (error) {
     console.error('Ошибка при поиске судов:', error);
   }
 });
 
 
-// Функция для редактирования судна
-function editShip(shipId) {
-  // Здесь вы можете добавить логику для редактирования судна
-  console.log('Edit ship with ID:', shipId);
-}
 
-// Функция для удаления судна
-async function deleteShip(shipId) {
-  const confirmation = confirm('Вы уверены, что хотите удалить это судно?');
-  if (confirmation) {
-    try {
-      const result = await ipcRenderer.invoke('delete-ship', shipId);
-      if (result.success) {
-        loadShipData(); // Перезагружаем данные после удаления
-      } else {
-        alert(result.message);
-      }
-    } catch (error) {
-      console.error('Ошибка при удалении судна:', error);
-    }
-  }
-}
+
 function viewDetails(shipId) {
   // Передаем ID судна через IPC и перенаправляем на другую страницу
   ipcRenderer.invoke('load-ship-details', shipId).then(() => {
