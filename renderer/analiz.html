@@ -20,6 +20,7 @@
   <div class="sidebar">
     <h2>Меню</h2>
     <ul>
+      <li><a href="index.html">Список судов</a></li>
       <li><a href="admin.html">Администратор</a></li>
       <li><a href="shipFormular.html">Формуляр судна</a></li>
       <li><a href="analiz.html">Анализ</a></li>
@@ -28,23 +29,10 @@
   <button class="sidebar-toggle">⟨</button>
   <div class="overlay"></div>
   <div id="table-container">
-  <table id="ship-table" border="1">
-    <thead>
-      <tr>
-        <th>№</th>
-        <th>Название судна</th>
-        <th>Регистровый номер</th>
-        <th>Номер ИМО</th>
-      
-    
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Данные будут добавляться динамически -->
-    </tbody>
-  </table>
+    <table id="pivotTable" border="1"></table>
 </div>
  <script src="assets/js/indexScripts.js"></script>
- <script src="assets/js/shipBackScripts.js"></script>
+ <script src="assets/js/analizScripts.js"></script>
+
 </body>
 </html>

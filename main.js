@@ -4,11 +4,12 @@ const AdminRoutes = require('./back/adminBack');
 const WindowManager = require('./windowManager');
 const createCustomMenu = require('./menuManager');
 const ShipBaseBack = require('./back/shipBaseBack');
+const AnalyzeData = require('./back/analiz');
 const auth = new Auth();
-const adminRoutes = new AdminRoutes();
+new AdminRoutes();
 const windowManager = new WindowManager(auth);
 new ShipBaseBack();
-
+new AnalyzeData();
 
 app.on('ready', () => {
   windowManager.createMainWindow();

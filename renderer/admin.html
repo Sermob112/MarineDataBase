@@ -3,10 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="assets/css/base.css"> <!-- Подключение CSS файла -->
+    <link rel="stylesheet" href="assets/css/base.css"> 
+    <link rel="stylesheet" href="assets/css/admin.css"> <!-- Подключение CSS файла -->
+    <!-- Подключение CSS файла -->
     <title>Админ панель</title>
 </head>
-<body>
+<body class="admin">
+
+    <div class="sidebar">
+        <h2>Меню</h2>
+        <ul>
+      
+          <li><a href="index.html">Список судов</a></li>
+          <li><a href="shipFormular.html">Формуляр судна</a></li>
+          <li><a href="analiz.html">Анализ</a></li>
+        </ul>
+      </div>
+      <button class="sidebar-toggle">⟨</button>
+      <div class="overlay"></div>
     <div class="tabs">
         <div class="tab active" data-tab="users">Пользователи</div>
         <div class="tab" data-tab="userLogs">Журнал пользователей</div>
@@ -42,6 +56,9 @@
     
         <button type="submit">Добавить пользователя</button>
     </form>
+    <h1>Выберите CSV-файл</h1>
+    <input type="file" id="fileInput" accept=".csv" />
+    <button id="uploadButton">Загрузить</button>
     <div id="editUserModal" style="display: none;">
         <h2>Редактировать пользователя</h2>
         <form id="editUserForm">
@@ -78,6 +95,9 @@
         </tbody>
     </table>
 </div>
+
     <script src="assets/js/adminScripts.js"></script>
+    <script src="assets/js/indexScripts.js"></script>
 </body>
+
 </html>

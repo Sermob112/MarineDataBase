@@ -1,6 +1,7 @@
 const { ipcMain } = require('electron');
 const { MarinFleet } = require('../models');
 const { Op } = require('sequelize');
+const { importVesselData } = require('./csvReader');
 class ShipBaseBack {
   constructor() {
     this.setupRoutes();
@@ -14,6 +15,15 @@ class ShipBaseBack {
     ipcMain.handle('edit-ship', this.editShip.bind(this));
     ipcMain.handle('get-selected-ship', this.getSelectedShip.bind(this));
     ipcMain.handle('load-ship-details', this.loadShipDetails.bind(this));
+    ipcMain.handle('import-vessel-data', async (event, filePath) => {
+      try {
+          const message = await importVesselData(filePath);
+          return { success: true, message };
+      } catch (error) {
+          console.error('Error importing vessel data:', error);
+          return { success: false, error: error };
+      }
+  });
   }
 
   // Получение всех данных из базы

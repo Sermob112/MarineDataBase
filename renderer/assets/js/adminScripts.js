@@ -151,3 +151,31 @@ async function deleteUser(userId) {
     }
 }
 loadUsers();
+
+
+
+document.getElementById('uploadButton').addEventListener('click', async () => {
+    const fileInput = document.getElementById('fileInput');
+    const selectedFile = fileInput.files[0]; // Получаем выбранный файл
+
+    if (!selectedFile) {
+        alert('Пожалуйста, выберите CSV-файл.');
+        return;
+    }
+
+    // Передаем путь файла в main process через ipcRenderer
+    try {
+        const response = await ipcRenderer.invoke('import-vessel-data', selectedFile.path);
+
+        if (response.success) {
+            console.log('Data imported successfully:', response.results);
+            alert('Импорт данных успешно завершен!');
+        } else {
+            console.error('Error importing data:', response.error);
+            alert(`Ошибка импорта: ${response.error}`);
+        }
+    } catch (error) {
+        console.error('IPC communication error:', error);
+        alert('Ошибка связи с основным процессом.');
+    }
+});
