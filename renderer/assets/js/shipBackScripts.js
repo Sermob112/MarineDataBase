@@ -27,7 +27,7 @@ async function loadShipData() {
       idCell.textContent = ship.id;
 
       const nameCell = document.createElement('td');
-      nameCell.textContent = ship.vessel_name;
+      nameCell.textContent = ship.main_type;
 
       const imoCell = document.createElement('td');
       imoCell.textContent = ship.imo_number;
@@ -35,10 +35,19 @@ async function loadShipData() {
       const registryCell = document.createElement('td');
       registryCell.textContent = ship.reg_number;
 
+      const factoryCell = document.createElement('td');
+      factoryCell.textContent = ship.refit_factory;
+
+      const projectCell = document.createElement('td');
+      projectCell.textContent = ship.vessel_project;
+
       row.appendChild(idCell);
       row.appendChild(nameCell);
       row.appendChild(imoCell);
       row.appendChild(registryCell);
+      row.appendChild(factoryCell);
+      row.appendChild(projectCell);
+
       row.addEventListener('click', () => {
         viewDetails(ship.id);
       });
@@ -86,7 +95,7 @@ document.getElementById('search-input').addEventListener('input', async event =>
       idCell.textContent = ship.id;
 
       const nameCell = document.createElement('td');
-      nameCell.textContent = ship.vessel_name;
+      nameCell.textContent = ship.main_type;
 
       const imoCell = document.createElement('td');
       imoCell.textContent = ship.imo_number;
@@ -94,10 +103,18 @@ document.getElementById('search-input').addEventListener('input', async event =>
       const registryCell = document.createElement('td');
       registryCell.textContent = ship.reg_number;
 
+      const factoryCell = document.createElement('td');
+      factoryCell.textContent = ship.refit_factory;
+
+      const projectCell = document.createElement('td');
+      projectCell.textContent = ship.vessel_project;
+
       row.appendChild(idCell);
       row.appendChild(nameCell);
       row.appendChild(imoCell);
       row.appendChild(registryCell);
+      row.appendChild(factoryCell);
+      row.appendChild(projectCell);
 
       row.addEventListener('click', () => {
         viewDetails(ship.id);

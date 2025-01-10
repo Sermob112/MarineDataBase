@@ -1,5 +1,7 @@
 const { BrowserWindow } = require('electron');
-const { UserLog } = require('./models');
+const path = require('path');
+const { UserLog } = require('../database/models');
+
 
 class WindowManager {
   constructor(auth) {
@@ -11,6 +13,7 @@ class WindowManager {
     this.mainWindow = new BrowserWindow({
 
       webPreferences: {
+    
         nodeIntegration: true,
         contextIsolation: false,
       },

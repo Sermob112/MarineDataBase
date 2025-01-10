@@ -9,3 +9,8 @@ body.admin {
     gap: 10px; /* Промежутки между строками */
     box-sizing: border-box;
 }
+
+#ClearDBButton
+{
+    color: red;
+}

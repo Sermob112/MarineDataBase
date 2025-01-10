@@ -7,14 +7,21 @@
   <link rel="stylesheet" href="assets/css/auth.css"> <!-- Подключение CSS файла -->
 </head>
 <body>
+  <div id="auth-screen" class="screen"> 
   <div class="auth-container">
     <h2>Авторизация</h2>
+    <div id="db-status">
+      <span id="db-indicator" style="width: 20px; height: 20px; display: inline-block; border-radius: 50%;"></span>
+      <span id="db-message"></span>
+    </div>
     <form id="auth-form">
       <label for="username">Имя пользователя:</label>
       <input type="text" id="username" name="username" required><br><br>
       <label for="password">Пароль:</label>
       <input type="password" id="password" name="password" required><br><br>
       <button type="submit">Войти</button>
+      <button type="button" id="switch-to-db-settings">Настройки подключения к БД</button>
+      <p id="error-message" style="color: red;"></p>
       <div class="window-controls">
         <button id="minimize-btn">
           <img src="assets/images/minimize.png" alt="Свернуть">
@@ -22,12 +29,43 @@
         <button id="close-btn">
           <img src="assets/images/close.png" alt="Закрыть">
         </button>
+        
       </div>
       <p id="error-message" style="color: red;"></p>
     </form>
   </div>
-
+</div>
+ <!-- Экран настроек подключения к БД -->
+ <div id="db-settings-screen" class="screen" style="display: none;">
+  <div class="db-settings-container">
+    <h2>Настройки подключения к БД</h2>
+    <form id="db-settings-form">
+      <label for="db-name">Имя БД:</label>
+      <input type="text" id="db-name" name="db-name" value="marinebase" required><br><br>
+      <label for="db-user">Пользователь:</label>
+      <input type="text" id="db-user" name="db-user" value="postgres" required><br><br>
+      <label for="db-password">Пароль:</label>
+      <input type="password" id="db-password" name="db-password" value="sa" required><br><br>
+      <label for="db-host">Хост:</label>
+      <input type="text" id="db-host" name="db-host" value="localhost" required><br><br>
+      <label for="db-port">Порт:</label>
+      <input type="number" id="db-port" name="db-port" value="5432" required><br><br>
+      <button type="button" id="connect-db">Подключиться</button>
+<p id="db-config-result" style="color: green;"></p>
+      <button type="button" id="switch-to-auth">Назад</button>
+      <div class="window-controls">
+        <button id="minimize-btn">
+          <img src="assets/images/minimize.png" alt="Свернуть">
+        </button>
+        <button id="close-btn">
+          <img src="assets/images/close.png" alt="Закрыть">
+        </button>
+    </form>
+  </div>
+</div>
   <!-- Подключение JS файла -->
+  <!-- <script src="assets/js/dbStatusScripts.js"></script> -->
   <script src="assets/js/authScripts.js"></script>
+
 </body>
 </html>

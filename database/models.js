@@ -1,52 +1,19 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('./db');
+const { Sequelize, DataTypes } = require('sequelize');
+const config = require('../config.json');
 
-// Определение моделей
-// const MarinFleet = sequelize.define('MarinFleet', {
-//     reg_no: { type: DataTypes.TEXT, allowNull: false },
-//     name: { type: DataTypes.TEXT, allowNull: false },
-//     building_no: { type: DataTypes.TEXT, allowNull: false },
-//     project: { type: DataTypes.TEXT, allowNull: false },
-//     type_and_purpose: { type: DataTypes.TEXT, allowNull: false },
-//     build_date: { type: DataTypes.DATEONLY, allowNull: false },
-//     build_place: { type: DataTypes.TEXT, allowNull: false },
-//     class_formula: { type: DataTypes.TEXT, allowNull: false },
-//     overall_length: { type: DataTypes.FLOAT, allowNull: false },
-//     structural_length: { type: DataTypes.FLOAT, allowNull: false },
-//     overall_width: { type: DataTypes.FLOAT, allowNull: false },
-//     structural_width: { type: DataTypes.FLOAT, allowNull: false },
-//     freeboard: { type: DataTypes.FLOAT, allowNull: false },
-//     board_height: { type: DataTypes.FLOAT, allowNull: false },
-//     gross_tonnage: { type: DataTypes.FLOAT, allowNull: false },
-//     net_tonnage: { type: DataTypes.FLOAT, allowNull: false },
-//     deadweight: { type: DataTypes.FLOAT, allowNull: false },
-//     displacement: { type: DataTypes.FLOAT, allowNull: false },
-//     lifting_capacity: { type: DataTypes.FLOAT, allowNull: false },
-//     transverse_bulkheads: { type: DataTypes.INTEGER, allowNull: false },
-//     longitudinal_bulkheads: { type: DataTypes.INTEGER, allowNull: false },
-//     passenger_capacity: { type: DataTypes.INTEGER, allowNull: false },
-//     crew: { type: DataTypes.INTEGER, allowNull: false },
-//     organization_group: { type: DataTypes.TEXT, allowNull: false },
-//     cargo_tanks: { type: DataTypes.INTEGER, allowNull: false },
-//     total_tank_volume: { type: DataTypes.FLOAT, allowNull: false },
-//     crane_capacity_1: { type: DataTypes.FLOAT, allowNull: false },
-//     crane_capacity_2: { type: DataTypes.FLOAT, allowNull: false },
-//     crane_capacity_3: { type: DataTypes.FLOAT, allowNull: false },
-//     hull_material: { type: DataTypes.TEXT, allowNull: false },
-//     superstructure_material: { type: DataTypes.TEXT, allowNull: false },
-//     main_engine_type: { type: DataTypes.TEXT, allowNull: false },
-//     main_engine_brand: { type: DataTypes.TEXT, allowNull: false },
-//     main_engine_power: { type: DataTypes.FLOAT, allowNull: false },
-//     main_engine_count: { type: DataTypes.INTEGER, allowNull: false },
-//     total_engine_power: { type: DataTypes.FLOAT, allowNull: false },
-//     total_ged_power: { type: DataTypes.FLOAT, allowNull: false },
-//     ged_power: { type: DataTypes.FLOAT, allowNull: false },
-//     ges_power: { type: DataTypes.FLOAT, allowNull: false },
-// }, {
-//     tableName: 'MarinFleet',
-//     timestamps: false
-// });
-const MarinFleet = sequelize.define('MarinFleet', {
+const sequelizer = new Sequelize(
+    config.DB_NAME,
+    config.DB_USER,
+    config.DB_PASSWORD,
+    {
+        host: config.DB_HOST,
+        port: config.DB_PORT,
+        dialect: config.DB_DIALECT,
+    }
+);
+
+
+const MarinFleet = sequelizer.define('MarinFleet', {
     vessel_name: { type: DataTypes.TEXT },
     reg_number: { type: DataTypes.TEXT  },
     imo_number: { type: DataTypes.TEXT  },
@@ -148,7 +115,7 @@ const MarinFleet = sequelize.define('MarinFleet', {
 });
 
 
-const User = sequelize.define('User', {
+const User = sequelizer.define('User', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     username: { type: DataTypes.TEXT, unique: true, allowNull: false },
     password: { type: DataTypes.TEXT, allowNull: false },
@@ -157,7 +124,7 @@ const User = sequelize.define('User', {
     timestamps: false
 });
 
-const Role = sequelize.define('Role', {
+const Role = sequelizer.define('Role', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     name: { type: DataTypes.TEXT, allowNull: false },
 }, {
@@ -165,7 +132,7 @@ const Role = sequelize.define('Role', {
     timestamps: false
 });
 
-const UserRole = sequelize.define('UserRole', {
+const UserRole = sequelizer.define('UserRole', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     user_id: {
         type: DataTypes.INTEGER,
@@ -182,7 +149,7 @@ const UserRole = sequelize.define('UserRole', {
     timestamps: false
 });
 
-const UserLog = sequelize.define('UserLog', {
+const UserLog = sequelizer.define('UserLog', {
     Id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     username: { type: DataTypes.TEXT, allowNull: false },
     login_time: { type: DataTypes.DATE, allowNull: false },
@@ -192,7 +159,7 @@ const UserLog = sequelize.define('UserLog', {
     timestamps: false
 });
 
-const ChangedDate = sequelize.define('ChangedDate', {
+const ChangedDate = sequelizer.define('ChangedDate', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     RegistryNumber: { type: DataTypes.TEXT, allowNull: false },
     username: { type: DataTypes.TEXT, allowNull: false },
@@ -216,5 +183,7 @@ module.exports = {
     UserRole,
     UserLog,
     ChangedDate,
-    sequelize
+    sequelizer
 };
+
+

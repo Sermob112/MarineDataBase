@@ -1,5 +1,5 @@
 const { ipcMain } = require('electron');
-const { User, Role, UserLog } = require('../models');
+const { User, Role, UserLog } = require('../database/models');
 
 class AdminRoutes {
   constructor() {

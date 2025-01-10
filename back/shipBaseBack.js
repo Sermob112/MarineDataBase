@@ -1,5 +1,5 @@
 const { ipcMain } = require('electron');
-const { MarinFleet } = require('../models');
+const { MarinFleet } = require('../database/models');
 const { Op } = require('sequelize');
 const { importVesselData } = require('./csvReader');
 class ShipBaseBack {
@@ -15,6 +15,7 @@ class ShipBaseBack {
     ipcMain.handle('edit-ship', this.editShip.bind(this));
     ipcMain.handle('get-selected-ship', this.getSelectedShip.bind(this));
     ipcMain.handle('load-ship-details', this.loadShipDetails.bind(this));
+    ipcMain.handle('clear-database', this.clearMarinFleet.bind(this));
     ipcMain.handle('import-vessel-data', async (event, filePath) => {
       try {
           const message = await importVesselData(filePath);
@@ -52,7 +53,15 @@ class ShipBaseBack {
       throw error;
     }
   }
-
+  async clearMarinFleet(event) {
+    try {
+      await MarinFleet.destroy({ truncate: true }); // Удаляем все записи
+      return { success: true, message: 'База данных успешно очищена' };
+    } catch (error) {
+      console.error('Ошибка при очистке базы данных:', error);
+      return { success: false, message: 'Произошла ошибка при очистке базы данных' };
+    }
+  }
   // Удаление судна по ID
   async deleteShip(event, shipId) {
     try {

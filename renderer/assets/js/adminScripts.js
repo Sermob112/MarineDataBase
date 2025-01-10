@@ -179,3 +179,24 @@ document.getElementById('uploadButton').addEventListener('click', async () => {
         alert('Ошибка связи с основным процессом.');
     }
 });
+const clearDBButton = document.getElementById('ClearDBButton');
+const statusMessage = document.getElementById('statusMessage');
+clearDBButton.addEventListener('click', async () => {
+  if (!confirm('Вы уверены, что хотите полностью очистить базу данных?')) {
+    return;
+  }
+  try {
+    const response = await ipcRenderer.invoke('clear-database');
+    if (response.success) {
+      statusMessage.textContent = 'База данных успешно очищена';
+      statusMessage.style.color = 'green';
+    } else {
+      statusMessage.textContent = `Ошибка: ${response.message}`;
+      statusMessage.style.color = 'red';
+    }
+  } catch (error) {
+    console.error('Ошибка при очистке базы данных:', error);
+    statusMessage.textContent = 'Произошла ошибка при очистке базы данных';
+    statusMessage.style.color = 'red';
+  }
+});

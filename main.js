@@ -1,8 +1,8 @@
 const { app } = require('electron');
-const Auth = require('./auth');
+const Auth = require('./utility/auth');
 const AdminRoutes = require('./back/adminBack');
-const WindowManager = require('./windowManager');
-const createCustomMenu = require('./menuManager');
+const WindowManager = require('./utility/windowManager');
+const createCustomMenu = require('./utility/menuManager');
 const ShipBaseBack = require('./back/shipBaseBack');
 const AnalyzeData = require('./back/analiz');
 const auth = new Auth();

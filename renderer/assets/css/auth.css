@@ -94,3 +94,83 @@ button[type="submit"]:hover {
     font-size: 14px;
     margin-top: 10px;
 }
+
+
+.screen {
+    display: none;
+  }
+
+  #auth-screen {
+    display: block;
+  }
+
+  .db-settings-container, .auth-container {
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 300px;
+    margin: auto;
+  }
+
+  .auth-container h2, .db-settings-container h2 {
+    text-align: center;
+  }
+
+  #switch-to-db-settings {
+    margin-top: 20px;
+    background-color: #add8e6; /* Светло-голубой цвет */
+    color: #ffffff; /* Белый цвет текста */
+    border: none; /* Без границ */
+    padding: 8px 12px; /* Отступы для компактного размера */
+    font-size: 14px; /* Размер шрифта */
+    border-radius: 4px; /* Скругленные углы */
+    cursor: pointer; /* Курсор указывает на кликабельность */
+    transition: background-color 0.3s ease; /* Эффект изменения цвета при наведении */
+  }
+
+  #switch-to-db-settings:hover {
+    background-color: #87ceeb; /* Более темный голубой при наведении */
+  }
+
+  #switch-to-db-settings:active {
+    background-color: #4682b4; /* Темно-голубой при нажатии */
+  }
+
+  #connect-db {
+    background-color: #32cd32; /* Лайм-зеленый */
+    color: #ffffff; /* Белый текст */
+    border: none; /* Без границ */
+    padding: 10px 15px; /* Отступы */
+    font-size: 14px; /* Размер шрифта */
+    border-radius: 4px; /* Скругленные углы */
+    cursor: pointer; /* Указатель на кликабельность */
+    transition: background-color 0.3s ease; /* Плавный переход цвета */
+  }
+
+  #connect-db:hover {
+    background-color: #228b22; /* Темно-зеленый при наведении */
+  }
+
+  #connect-db:active {
+    background-color: #006400; /* Очень темно-зеленый при нажатии */
+  }
+
+  /* Красная кнопка для "Назад" */
+  #switch-to-auth {
+    background-color: #ff6347; /* Томатный красный */
+    color: #ffffff; /* Белый текст */
+    border: none; /* Без границ */
+    padding: 10px 15px; /* Отступы */
+    font-size: 14px; /* Размер шрифта */
+    border-radius: 4px; /* Скругленные углы */
+    cursor: pointer; /* Указатель на кликабельность */
+    transition: background-color 0.3s ease; /* Плавный переход цвета */
+  }
+
+  #switch-to-auth:hover {
+    background-color: #ff4500; /* Оранжево-красный при наведении */
+  }
+
+  #switch-to-auth:active {
+    background-color: #b22222; /* Темно-красный при нажатии */
+  }

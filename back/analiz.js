@@ -1,5 +1,5 @@
 const { ipcMain } = require("electron");
-const { MarinFleet } = require("../models");
+const { MarinFleet } = require("../database/models");
 const dfd = require("danfojs");
 
 
@@ -13,16 +13,15 @@ class AnalyzeData {
 
   setupRoutes() {
     ipcMain.handle("createPivotTable", this.createPivotTable.bind(this));
+    ipcMain.handle("createPivotTableTwoFields", this.createPivotTableTwoFields.bind(this));
   }
-  async createPivotTable() {
+  async createPivotTable(event, fieldName) {
     try {
-      console.log("Fetching ships...");
+      console.log(`Fetching ships based on ${fieldName}...`);
       const ships = await MarinFleet.findAll({
-        attributes: ["port_of_registry"],
+        attributes: [fieldName],
         raw: true,
       });
-
-     
 
       if (ships.length === 0) {
         console.log("No data found");
@@ -30,21 +29,17 @@ class AnalyzeData {
       }
 
       ships.forEach((ship) => {
-        if (ship.port_of_registry) {
-          ship.port_of_registry = ship.port_of_registry.trim();
+        if (ship[fieldName]) {
+          ship[fieldName] = ship[fieldName].trim();
         }
       });
-      const df = new dfd.DataFrame(ships);
-     
-      if (!df.columns.every((col, index, arr) => arr.indexOf(col) === index)) {
-        throw new Error("Колонки в DataFrame должны быть уникальны");
-      }
-      const grouped = df.groupby(["port_of_registry"]);
-      const pivotTable = grouped.agg({ port_of_registry: "count" });
-      pivotTable.rename({ "port_of_registry_count": "count_per_port" }, { inplace: true });
-      const jsonData = dfd.toJSON(pivotTable, { format: 'records' });
-      
 
+      const df = new dfd.DataFrame(ships);
+      const grouped = df.groupby([fieldName]);
+      const pivotTable = grouped.agg({ [fieldName]: "count" });
+      pivotTable.rename({ [`${fieldName}_count`]: "Количество" }, { inplace: true });
+
+      const jsonData = dfd.toJSON(pivotTable, { format: "records" });
       console.log("Prepared table data:", jsonData);
       return jsonData;
     } catch (error) {
@@ -52,7 +47,52 @@ class AnalyzeData {
       throw error;
     }
   }
+
+  async createPivotTableTwoFields(event, field1, field2) {
+    try {
+      console.log(`Fetching data based on ${field1} and ${field2}...`);
+      
+      // Запрос к базе данных с выбором двух атрибутов
+      const ships = await MarinFleet.findAll({
+        attributes: [field1, field2],
+        raw: true,
+      });
+
+      if (ships.length === 0) {
+        console.log("No data found for the given attributes");
+        return { message: "Данные отсутствуют!" };
+      }
+
+      // Очистка данных (удаление пробелов в строках, если нужно)
+      ships.forEach((ship) => {
+        if (ship[field1]) ship[field1] = ship[field1].trim();
+        if (ship[field2]) ship[field2] = ship[field2].trim();
+      });
+
+      // Преобразование в DataFrame для анализа
+      const df = new dfd.DataFrame(ships);
+      
+      // Группировка по двум полям
+      const grouped = df.groupby([field1, field2]);
+      const pivotTable = grouped.agg({ [field1]: "count" });
+
+      // Переименование столбцов для удобства
+      pivotTable.rename(
+        { [`${field1}_count`]: "Количество" },
+        { inplace: true }
+      );
+
+      // Конвертация сводной таблицы в JSON
+      const jsonData = dfd.toJSON(pivotTable, { format: "records" });
+      console.log("Prepared pivot table data:", jsonData);
+      return jsonData;
+
+    } catch (error) {
+      console.error("Ошибка при создании сводной таблицы:", error);
+      throw error;
+    }
+  }
 }
 // const  anal = new AnalyzeData();
-// anal.createPivotTable();
+// anal.createPivotTableTwoFields(null,"overall_length","calc_length");
 module.exports = AnalyzeData;

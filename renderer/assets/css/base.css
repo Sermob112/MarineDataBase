@@ -5,8 +5,6 @@ body {
     padding: 0;
     background-color: #f5f5f5;
     display: grid;
-    grid-template-rows: 300px auto 1fr; /* Три строки: панель, таблица, резерв */
-    height: 100vh; /* Высота экрана для сетки */
     gap: 10px; /* Промежутки между строками */
     box-sizing: border-box;
 }

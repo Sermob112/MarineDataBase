@@ -1,6 +1,6 @@
 const fs = require('fs');
 const csv = require('csv-parser');
-const { MarinFleet } = require('../models'); // Импортируйте вашу модель
+const { MarinFleet } = require('../database/models'); // Импортируйте вашу модель
 
 
 
@@ -173,7 +173,7 @@ async function importVesselData(filePath) {
             .pipe(csv({ separator: ';' }))
             .on('data', (row) => {
                 const cleanRow = Object.keys(row).reduce((acc, key) => {
-                    acc[key.trim()] = row[key];
+                    acc[key.trim()] = row[key] || 'Нет данных';
                     return acc;
                 }, {});
 

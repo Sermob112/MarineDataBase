@@ -1,15 +1,17 @@
 const { BrowserWindow, ipcMain, app } = require('electron');
-const { User, UserLog } = require('./models');
-const DatabaseInitializer = require('./initialize_db');
+const { User, UserLog } = require('../database/models');
+const DatabaseInitializer = require('../database/initialize_db');
 
 class Auth {
   constructor() {
     this.authWindow = null;
     this.mainWindow = null;
     this.dbInitializer = new DatabaseInitializer();
+    this.dbInitializer.setupRoutes();
     this.initializeDatabase();
     this.setupIPCHandlers();
   }
+  
 
   async initializeDatabase() {
     try {
@@ -27,7 +29,7 @@ class Auth {
   createAuthWindow() {
     this.authWindow = new BrowserWindow({
       width: 600,
-      height: 400,
+      height: 600,
       webPreferences: {
         nodeIntegration: true,
         contextIsolation: false,
@@ -49,6 +51,9 @@ class Auth {
         this.authWindow.minimize();
       }
     });
+
+
+
 
     ipcMain.on('close-auth-window', () => {
       if (this.authWindow) {

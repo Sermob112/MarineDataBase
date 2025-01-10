@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/shipFormularBack.css">
   <title>Ship Details</title>
 
 </head>
@@ -27,15 +28,33 @@
   <button class="sidebar-toggle">⟨</button>
   <div class="overlay"></div>
 
- <table id="shipTable">
-    <thead>
-      <tr>
-        <th>Название поля</th>
-        <th>Значение</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+
+  
+  <details id="generalInfo">
+    <summary>Общая информация</summary>
+    <table></table>
+  </details>
+  
+  <details id="dimensions">
+    <summary>Основные измерения</summary>
+    <table></table>
+  </details>
+  
+  <details id="cargoInfo">
+    <summary>Грузовые помещения</summary>
+    <table></table>
+  </details>
+  
+  <details id="propulsion">
+    <summary>Энергетическая установка и пропульсивный комплекс</summary>
+    <table></table>
+  </details>
+  
+  <details id="miscellaneous">
+    <summary>Прочее</summary>
+    <table></table>
+  </details>
+
 
   <script src="assets/js/formularScripts.js"></script>
   <script src="assets/js/indexScripts.js"></script>
