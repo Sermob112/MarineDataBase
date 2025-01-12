@@ -28,13 +28,13 @@ class ShipBaseBack {
   }
 
   // Получение всех данных из базы
-  async getShipData(event, { offset = 0, batchSize = 50 }) {
+  async getShipData(event, { offset = 0, batchSize = 50, sortField = 'id', ascending = true }) {
     try {
-      // Параметризуем запрос
+      // Параметризуем запрос с сортировкой по полю и направлению
       const ships = await MarinFleet.findAll({
         offset, // Смещение
         limit: batchSize, // Количество записей
-        order: [['id', 'ASC']] // Упорядочиваем по id
+        order: [[sortField, ascending ? 'ASC' : 'DESC']] // Упорядочиваем по выбранному полю
       });
       return ships.map(ship => ship.toJSON());
     } catch (error) {

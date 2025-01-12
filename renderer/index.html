@@ -28,21 +28,21 @@
   <button class="sidebar-toggle">⟨</button>
   <div class="overlay"></div>
   <div id="table-container">
-  <table id="ship-table" border="1">
-    <thead>
-      <tr>
-        <th>№</th>
-        <th>Основной тип судна</th>
-        <th>ИМО Номер</th>
-        <th>Регистровый номер</th>
-        <th>Завод</th>
-        <th>Проект</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Данные будут добавляться динамически -->
-    </tbody>
-  </table>
+    <table id="ship-table" border="1">
+      <thead>
+        <tr>
+          <th data-field="id">№</th>
+          <th data-field="main_type">Основной тип судна</th>
+          <th data-field="imo_number">ИМО Номер</th>
+          <th data-field="reg_number">Регистровый номер</th>
+          <th data-field="refit_factory">Завод</th>
+          <th data-field="vessel_project">Проект</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Данные будут добавляться динамически -->
+      </tbody>
+    </table>
 </div>
  <script src="assets/js/indexScripts.js"></script>
  <script src="assets/js/shipBackScripts.js"></script>
