@@ -17,4 +17,13 @@ const createSequelizeInstance = () => {
 
 let sequelizer = createSequelizeInstance();
   
-module.exports = { sequelizer, createSequelizeInstance };
+
+const resetSequelize = () => {
+  
+  delete require.cache[require.resolve('../config.json')];
+  Object.assign(config, require('../config.json'));
+  sequelizer = createSequelizeInstance();
+  return sequelizer;
+};
+
+module.exports = { sequelizer, createSequelizeInstance, resetSequelize };

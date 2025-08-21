@@ -49,17 +49,12 @@ class DatabaseInitializer {
             port: dbPort,
             dialect: config.DB_DIALECT,
         });
-        this.systemDb = new Sequelize(
-          dbName,
-          dbUser,
-          dbPassword,
-          {
-            dbHost,
-            dbPort,
-              dialect: config.DB_DIALECT,
-          }
-      );
-      createSequelizeInstance()
+        this.systemDb = new Sequelize(dbName, dbUser, dbPassword, {
+          host: dbHost,                
+          port: dbPort,                
+          dialect: config.DB_DIALECT,
+        });
+      // createSequelizeInstance()
         // Проверяем соединение
         await this.systemDb.authenticate();
         console.log('New database connection established.');
@@ -69,6 +64,29 @@ class DatabaseInitializer {
         console.error('Error during database configuration:', error);
         return { status: 'error', message: error.message };
     }
+}
+async ensureDatabase(dbName) {
+  try {
+    const [rows] = await this.systemDb.query(
+      'SELECT 1 FROM pg_database WHERE datname = :name',
+      { replacements: { name: dbName } }
+    );
+    if (rows.length) {
+      console.log(`Database ${dbName} already exists.`);
+      return 'exists';
+    }
+    await this.systemDb.query(`CREATE DATABASE "${dbName}"`);
+    console.log(`Database ${dbName} created successfully.`);
+    await this.updateConfig(dbName);
+    return 'created';
+  } catch (error) {
+    // на всякий случай, если параллельно создавали
+    if (error?.parent?.code === '42P04') {
+      console.log(`Database ${dbName} already exists (42P04).`);
+      return 'exists';
+    }
+    throw error;
+  }
 }
 // sr
   async  updateConfig(newDbName)
@@ -130,16 +148,21 @@ class DatabaseInitializer {
     }
 }
 
-  async syncModels() {
-    try {
-      console.log("syncModels " + config.DB_NAME);
-      await sequelizer.sync({ force: true });
-      
-    } catch (error) {
-      console.error('Failed to synchronize models:', error);
-      throw error;
+async syncModels(mode = 'safe') {
+  try {
+    console.log("syncModels " + config.DB_NAME);
+    if (mode === 'force') {
+      await sequelizer.sync({ force: true });   // использовать только вручную!
+    } else if (mode === 'alter') {
+      await sequelizer.sync({ alter: true });   // мягко мигрирует схему
+    } else {
+      await sequelizer.sync();                   // без изменений схемы
     }
+  } catch (error) {
+    console.error('Failed to synchronize models:', error);
+    throw error;
   }
+}
 
   async createDefaultUsersAndRoles() {
     try {
@@ -174,7 +197,7 @@ class DatabaseInitializer {
 
   async initialize() {
     try {
-      await this.createDatabase();
+      await this.ensureDatabase('marinebase');      
       await this.syncModels();
       await this.createDefaultUsersAndRoles();
       console.log('Database initialized successfully.');

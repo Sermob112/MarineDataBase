@@ -199,3 +199,16 @@ function renderPivotTable(data) {
     table.appendChild(tr);
   });
 }
+
+document.getElementById('toggleButton').addEventListener('click', () => {
+  const sidebar = document.getElementById('sidebar');
+  const tableContainer = document.querySelector('.table-container');
+
+  if (sidebar.style.right === '0px') {
+      sidebar.style.right = '-50%';
+      tableContainer.style.marginRight = '0';
+  } else {
+      sidebar.style.right = '0px';
+      tableContainer.style.marginRight = '50%';
+  }
+});

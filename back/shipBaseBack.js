@@ -111,33 +111,75 @@ class ShipBaseBack {
     
   }
 
-  async searchShips(event, query) {
+  async  searchShips(
+    event, 
+    { query, offset, batchSize, sortField = 'id', ascending = true }
+  ) {
     try {
-      // Общее количество записей в базе
+      // Общее количество записей в базе (без каких-либо фильтров)
       const totalRecords = await MarinFleet.count();
   
-      // Условие для поиска
+      // Формируем условие для поиска
       const whereCondition = query
-        ? { vessel_name: { [Op.like]: `%${query}%` } }
-        : {};
+      ? {
+        [Op.or]: [
+            { reg_number: { [Op.like]: `%${query}%` } },
+            { main_type: { [Op.like]: `%${query}%` } },
+            { imo_number: { [Op.like]: `%${query}%` } },
+            { refit_factory: { [Op.like]: `%${query}%` } },
+            { vessel_project: { [Op.like]: `%${query}%` } },
+       
+        ]
+    }
+    : {};
   
       // Количество записей, соответствующих запросу
       const filteredCount = await MarinFleet.count({ where: whereCondition });
   
-      // Найденные записи
-      const ships = await MarinFleet.findAll({ where: whereCondition });
+      // Загружаем записи c учётом пагинации и сортировки
+      const ships = await MarinFleet.findAll({
+        where: whereCondition,
+        offset,                      // "Смещение" (skip)
+        limit: batchSize,           // "Количество" (take)
+        order: [ 
+          [sortField, ascending ? 'ASC' : 'DESC'] 
+        ],
+      });
   
+      // Возвращаем объект со сводкой и найденными данными
       return {
-        totalRecords,       // Общее количество записей в базе
-        filteredCount,      // Количество записей, соответствующих запросу
-        ships: ships.map(ship => ship.toJSON()), // Найденные записи
+        totalRecords,       // Всего в таблице
+        filteredCount,      // Сколько соответствует поиску
+        ships: ships.map(ship => ship.toJSON()),
       };
     } catch (error) {
       console.error('Ошибка при поиске судов:', error);
       throw error;
     }
   }
-  
 }
+
+
+// (async () => {
+//   try {
+//     const shipBaseBackInstance = new ShipBaseBack();
+    
+//     // Параметры для поиска судов
+//     const searchParams = {
+//       query: '15',  // Строка для поиска
+//       offset: 0,               // Смещение для пагинации
+//       batchSize: 10,           // Количество записей на странице
+//       sortField: 'vessel_name',// Поле для сортировки
+//       ascending: true          // Направление сортировки
+//     };
+    
+//     // Вызов метода
+//     const searchResult = await shipBaseBackInstance.searchShips(null, searchParams);
+
+//     console.log('Результаты поиска судов:', searchResult);
+//   } catch (error) {
+//     console.error('Ошибка при вызове метода searchShips:', error);
+//   }
+// })();
 
 module.exports = ShipBaseBack;
