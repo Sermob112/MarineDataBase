@@ -1,5 +1,5 @@
 const { BrowserWindow, ipcMain, app } = require('electron');
-const { User, UserLog } = require('../database/models');
+const models = require('../database/models');    
 const DatabaseInitializer = require('../database/initialize_db');
 
 class Auth {
@@ -70,9 +70,9 @@ class Auth {
       const { username, password } = credentials;
 
       try {
-        const user = await User.findOne({ where: { username, password } });
+        const user = await models.User.findOne({ where: { username, password } });
         if (user) {
-          const loginLog = await UserLog.create({
+          const loginLog = await models.UserLog.create({
             username: user.username,
             login_time: new Date(),
           });
@@ -104,7 +104,7 @@ class Auth {
       try {
         const logId = event.sender.session.userLogId;
         if (logId) {
-          await UserLog.update(
+          await models.UserLog.update(
             { logout_time: new Date() },
             { where: { Id: logId } }
           );

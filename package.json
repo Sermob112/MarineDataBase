@@ -27,11 +27,11 @@
     "electron-builder": "^24.7.2"
   },
   "build": {
-    "appId": "com.idle.app",
-    "productName": "Idle App",
+    "appId": "ShipDataBase.idle.app",
+    "productName": "ShipDataBase App",
     "win": {
       "target": "nsis",
-      "icon": "icon.ico"
+      "icon": "ship.png"
     },
     "files": [
       "main.js",
@@ -39,7 +39,6 @@
       "database/**",
       "renderer/**",
       "back/**",
-      "config.json",
       "package.json",
       ".env"
 

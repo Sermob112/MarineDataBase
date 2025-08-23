@@ -1,7 +1,8 @@
 const { ipcMain } = require('electron');
-const { MarinFleet } = require('../database/models');
+const models = require('../database/models');      // <-- контейнер
 const { Op } = require('sequelize');
-const { importVesselData } = require('./csvReader');
+const { importVesselDataNew } = require('./CsvReaderShipDataByArtem');
+
 class ShipBaseBack {
   constructor() {
     this.setupRoutes();
@@ -16,25 +17,24 @@ class ShipBaseBack {
     ipcMain.handle('get-selected-ship', this.getSelectedShip.bind(this));
     ipcMain.handle('load-ship-details', this.loadShipDetails.bind(this));
     ipcMain.handle('clear-database', this.clearMarinFleet.bind(this));
-    ipcMain.handle('import-vessel-data', async (event, filePath) => {
+    ipcMain.handle('import-vessel-data', async (_event, filePath) => {
       try {
-          const message = await importVesselData(filePath);
-          return { success: true, message };
+        const message = await importVesselDataNew(filePath);
+        return { success: true, message };
       } catch (error) {
-          console.error('Error importing vessel data:', error);
-          return { success: false, error: error };
+        console.error('Error importing vessel data:', error);
+        return { success: false, error: error };
       }
-  });
+    });
   }
 
   // Получение всех данных из базы
-  async getShipData(event, { offset = 0, batchSize = 50, sortField = 'id', ascending = true }) {
+  async getShipData(_event, { offset = 0, batchSize = 50, sortField = 'id', ascending = true }) {
     try {
-      // Параметризуем запрос с сортировкой по полю и направлению
-      const ships = await MarinFleet.findAll({
-        offset, // Смещение
-        limit: batchSize, // Количество записей
-        order: [[sortField, ascending ? 'ASC' : 'DESC']] // Упорядочиваем по выбранному полю
+      const ships = await models.MarinFleet.findAll({
+        offset,
+        limit: batchSize,
+        order: [[sortField, ascending ? 'ASC' : 'DESC']]
       });
       return ships.map(ship => ship.toJSON());
     } catch (error) {
@@ -44,28 +44,30 @@ class ShipBaseBack {
   }
 
   // Добавление нового судна
-  async addShip(event, shipData) {
+  async addShip(_event, shipData) {
     try {
-      const newShip = await MarinFleet.create(shipData);
+      const newShip = await models.MarinFleet.create(shipData);
       return newShip.toJSON();
     } catch (error) {
       console.error('Ошибка при добавлении судна:', error);
       throw error;
     }
   }
-  async clearMarinFleet(event) {
+
+  async clearMarinFleet() {
     try {
-      await MarinFleet.destroy({ truncate: true }); // Удаляем все записи
+      await models.MarinFleet.destroy({ truncate: true });
       return { success: true, message: 'База данных успешно очищена' };
     } catch (error) {
       console.error('Ошибка при очистке базы данных:', error);
       return { success: false, message: 'Произошла ошибка при очистке базы данных' };
     }
   }
+
   // Удаление судна по ID
-  async deleteShip(event, shipId) {
+  async deleteShip(_event, shipId) {
     try {
-      const ship = await MarinFleet.findByPk(shipId);
+      const ship = await models.MarinFleet.findByPk(shipId);
       if (ship) {
         await ship.destroy();
         return { success: true };
@@ -79,9 +81,9 @@ class ShipBaseBack {
   }
 
   // Редактирование судна
-  async editShip(event, { id, ...updatedData }) {
+  async editShip(_event, { id, ...updatedData }) {
     try {
-      const ship = await MarinFleet.findByPk(id);
+      const ship = await models.MarinFleet.findByPk(id);
       if (ship) {
         await ship.update(updatedData);
         return ship.toJSON();
@@ -93,9 +95,10 @@ class ShipBaseBack {
       throw error;
     }
   }
+
   async getSelectedShip() {
     if (this.selectedShip) {
-      const ships = await MarinFleet.findAll();
+      const ships = await models.MarinFleet.findAll();
       return {
         selectedShip: this.selectedShip.toJSON(),
         totalShips: ships.length,
@@ -104,52 +107,42 @@ class ShipBaseBack {
       throw new Error('Судно не выбрано');
     }
   }
-  
 
-  async loadShipDetails(event, shipId) {
-    this.selectedShip = await MarinFleet.findByPk(shipId);
-    
+  async loadShipDetails(_event, shipId) {
+    this.selectedShip = await models.MarinFleet.findByPk(shipId);
   }
 
-  async  searchShips(
-    event, 
+  async searchShips(
+    _event,
     { query, offset, batchSize, sortField = 'id', ascending = true }
   ) {
     try {
-      // Общее количество записей в базе (без каких-либо фильтров)
-      const totalRecords = await MarinFleet.count();
-  
-      // Формируем условие для поиска
+      const totalRecords = await models.MarinFleet.count();
+
       const whereCondition = query
-      ? {
-        [Op.or]: [
-            { reg_number: { [Op.like]: `%${query}%` } },
-            { main_type: { [Op.like]: `%${query}%` } },
-            { imo_number: { [Op.like]: `%${query}%` } },
-            { refit_factory: { [Op.like]: `%${query}%` } },
-            { vessel_project: { [Op.like]: `%${query}%` } },
-       
-        ]
-    }
-    : {};
-  
-      // Количество записей, соответствующих запросу
-      const filteredCount = await MarinFleet.count({ where: whereCondition });
-  
-      // Загружаем записи c учётом пагинации и сортировки
-      const ships = await MarinFleet.findAll({
+        ? {
+            [Op.or]: [
+              { reg_number: { [Op.like]: `%${query}%` } },
+              { main_type: { [Op.like]: `%${query}%` } },
+              { imo_number: { [Op.like]: `%${query}%` } },
+              { refit_factory: { [Op.like]: `%${query}%` } },
+              { vessel_project: { [Op.like]: `%${query}%` } },
+            ],
+          }
+        : {};
+
+      const filteredCount = await models.MarinFleet.count({ where: whereCondition });
+
+      const ships = await models.MarinFleet.findAll({
         where: whereCondition,
-        offset,                      // "Смещение" (skip)
-        limit: batchSize,           // "Количество" (take)
-        order: [ 
-          [sortField, ascending ? 'ASC' : 'DESC'] 
-        ],
+        offset,
+        limit: batchSize,
+        order: [[sortField, ascending ? 'ASC' : 'DESC']],
       });
-  
-      // Возвращаем объект со сводкой и найденными данными
+
       return {
-        totalRecords,       // Всего в таблице
-        filteredCount,      // Сколько соответствует поиску
+        totalRecords,
+        filteredCount,
         ships: ships.map(ship => ship.toJSON()),
       };
     } catch (error) {
@@ -158,28 +151,5 @@ class ShipBaseBack {
     }
   }
 }
-
-
-// (async () => {
-//   try {
-//     const shipBaseBackInstance = new ShipBaseBack();
-    
-//     // Параметры для поиска судов
-//     const searchParams = {
-//       query: '15',  // Строка для поиска
-//       offset: 0,               // Смещение для пагинации
-//       batchSize: 10,           // Количество записей на странице
-//       sortField: 'vessel_name',// Поле для сортировки
-//       ascending: true          // Направление сортировки
-//     };
-    
-//     // Вызов метода
-//     const searchResult = await shipBaseBackInstance.searchShips(null, searchParams);
-
-//     console.log('Результаты поиска судов:', searchResult);
-//   } catch (error) {
-//     console.error('Ошибка при вызове метода searchShips:', error);
-//   }
-// })();
 
 module.exports = ShipBaseBack;

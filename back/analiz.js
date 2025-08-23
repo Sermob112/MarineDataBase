@@ -1,13 +1,9 @@
 const { ipcMain } = require("electron");
-const { MarinFleet } = require("../database/models");
+const models = require("../database/models");   // <-- контейнер
 const dfd = require("danfojs");
 
-
-
 class AnalyzeData {
-
-
-    constructor() {
+  constructor() {
     this.setupRoutes();
   }
 
@@ -15,10 +11,11 @@ class AnalyzeData {
     ipcMain.handle("createPivotTable", this.createPivotTable.bind(this));
     ipcMain.handle("createPivotTableTwoFields", this.createPivotTableTwoFields.bind(this));
   }
-  async createPivotTable(event, fieldName) {
+
+  async createPivotTable(_event, fieldName) {
     try {
       console.log(`Fetching ships based on ${fieldName}...`);
-      const ships = await MarinFleet.findAll({
+      const ships = await models.MarinFleet.findAll({
         attributes: [fieldName],
         raw: true,
       });
@@ -48,12 +45,10 @@ class AnalyzeData {
     }
   }
 
-  async createPivotTableTwoFields(event, field1, field2) {
+  async createPivotTableTwoFields(_event, field1, field2) {
     try {
       console.log(`Fetching data based on ${field1} and ${field2}...`);
-      
-      // Запрос к базе данных с выбором двух атрибутов
-      const ships = await MarinFleet.findAll({
+      const ships = await models.MarinFleet.findAll({
         attributes: [field1, field2],
         raw: true,
       });
@@ -63,26 +58,16 @@ class AnalyzeData {
         return { message: "Данные отсутствуют!" };
       }
 
-      // Очистка данных (удаление пробелов в строках, если нужно)
       ships.forEach((ship) => {
         if (ship[field1]) ship[field1] = ship[field1].trim();
         if (ship[field2]) ship[field2] = ship[field2].trim();
       });
 
-      // Преобразование в DataFrame для анализа
       const df = new dfd.DataFrame(ships);
-      
-      // Группировка по двум полям
       const grouped = df.groupby([field1, field2]);
       const pivotTable = grouped.agg({ [field1]: "count" });
+      pivotTable.rename({ [`${field1}_count`]: "Количество" }, { inplace: true });
 
-      // Переименование столбцов для удобства
-      pivotTable.rename(
-        { [`${field1}_count`]: "Количество" },
-        { inplace: true }
-      );
-
-      // Конвертация сводной таблицы в JSON
       const jsonData = dfd.toJSON(pivotTable, { format: "records" });
       console.log("Prepared pivot table data:", jsonData);
       return jsonData;
@@ -93,6 +78,5 @@ class AnalyzeData {
     }
   }
 }
-// const  anal = new AnalyzeData();
-// anal.createPivotTableTwoFields(null,"overall_length","calc_length");
+
 module.exports = AnalyzeData;

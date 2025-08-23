@@ -1,5 +1,5 @@
 const { ipcMain } = require('electron');
-const { User, Role, UserLog } = require('../database/models');
+const models = require('../database/models'); // <-- контейнер моделей
 
 class AdminRoutes {
   constructor() {
@@ -16,9 +16,9 @@ class AdminRoutes {
 
   async getUsersWithRoles() {
     try {
-      const users = await User.findAll({
+      const users = await models.User.findAll({
         include: {
-          model: Role,
+          model: models.Role,
           through: { attributes: [] },
         },
       });
@@ -29,13 +29,13 @@ class AdminRoutes {
     }
   }
 
-  async addUser(event, userData) {
+  async addUser(_event, userData) {
     try {
       const { username, password, roles } = userData;
-      const newUser = await User.create({ username, password });
+      const newUser = await models.User.create({ username, password });
 
       if (roles && roles.length > 0) {
-        const roleInstances = await Role.findAll({
+        const roleInstances = await models.Role.findAll({
           where: { name: roles },
         });
         await newUser.addRoles(roleInstances);
@@ -48,9 +48,9 @@ class AdminRoutes {
     }
   }
 
-  async deleteUser(event, userId) {
+  async deleteUser(_event, userId) {
     try {
-      const user = await User.findByPk(userId);
+      const user = await models.User.findByPk(userId);
       if (user) {
         await user.destroy();
         return { success: true };
@@ -63,16 +63,16 @@ class AdminRoutes {
     }
   }
 
-  async editUser(event, { userId, username, password, roles }) {
+  async editUser(_event, { userId, username, password, roles }) {
     try {
-      const user = await User.findByPk(userId);
+      const user = await models.User.findByPk(userId);
       if (user) {
         user.username = username;
         user.password = password;
         await user.save();
 
         if (roles && roles.length > 0) {
-          const roleInstances = await Role.findAll({
+          const roleInstances = await models.Role.findAll({
             where: { name: roles },
           });
           await user.setRoles(roleInstances);
@@ -90,7 +90,7 @@ class AdminRoutes {
 
   async getUserLogs() {
     try {
-      const logs = await UserLog.findAll();
+      const logs = await models.UserLog.findAll();
       return logs.map(log => log.toJSON());
     } catch (error) {
       console.error('Ошибка при получении журнала пользователей:', error);

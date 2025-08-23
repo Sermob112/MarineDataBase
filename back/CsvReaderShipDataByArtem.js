@@ -1,10 +1,12 @@
 // newCsvReader.js
 const fs = require('fs');
 const csv = require('csv-parser');
-const { MarinFleet } = require('../database/models'); // ваша модель
+const models = require('../database/models'); // <-- контейнер моделей
 
 // Нормализация ключей: trim + схлопывание внутренних пробелов
 const normalizeKey = (k) => k.replace(/\s+/g, ' ').trim();
+
+
 
 const headersMap = {
   // Обратите внимание на пробел в исходнике "Регис тровый номер"
@@ -99,7 +101,6 @@ async function importVesselDataNew(filePath) {
     fs.createReadStream(filePath)
       .pipe(csv({ separator: ';' }))
       .on('data', (row) => {
-
         const cleanRow = Object.keys(row).reduce((acc, key) => {
           const nKey = normalizeKey(key);
           acc[nKey] = (row[key] ?? '').toString().trim();
@@ -110,7 +111,7 @@ async function importVesselDataNew(filePath) {
       .on('end', async () => {
         try {
           if (!results.length) return resolve('Файл пуст или не распознан.');
-          await MarinFleet.bulkCreate(results);
+          await models.MarinFleet.bulkCreate(results); // <-- контейнер
           resolve(`Импортировано записей: ${results.length}`);
         } catch (error) {
           reject(`Database error: ${error.message}`);
@@ -122,5 +123,5 @@ async function importVesselDataNew(filePath) {
   });
 }
 
-importVesselDataNew("ship_data_razdel_1.csv");
+// importVesselDataNew("ship_data_razdel_1.csv");
 module.exports = { importVesselDataNew };

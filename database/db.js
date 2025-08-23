@@ -1,29 +1,37 @@
-const config = require('../config.json');
+// database/db.js
 const { Sequelize } = require('sequelize');
+const { getConfigSync } = require('../utility/config');
+const models = require('./models');
 
 const createSequelizeInstance = () => {
-
-  return new Sequelize(
-    config.DB_NAME,
-    config.DB_USER,
-    config.DB_PASSWORD,
-    {
-      host: config.DB_HOST,
-      port: config.DB_PORT,
-      dialect: config.DB_DIALECT,
-    }
-  );
+  const cfg = getConfigSync();
+  return new Sequelize(cfg.DB_NAME, cfg.DB_USER, cfg.DB_PASSWORD, {
+    host: cfg.DB_HOST,
+    port: cfg.DB_PORT,
+    dialect: cfg.DB_DIALECT,
+  });
 };
 
 let sequelizer = createSequelizeInstance();
-  
+models.initModels(sequelizer);
 
-const resetSequelize = () => {
-  
-  delete require.cache[require.resolve('../config.json')];
-  Object.assign(config, require('../config.json'));
+async function resetSequelize() {
+  const old = sequelizer;
+
+  // 1) создаём новый и сразу публикуем наружу
   sequelizer = createSequelizeInstance();
+  module.exports.sequelizer = sequelizer;
+
+  // 2) привязываем модели к новому
+  models.initModels(sequelizer);
+
+  // 3) проверяем коннект (по желанию)
+  await sequelizer.authenticate().catch(() => { /* лог при желании */ });
+
+  // 4) закрываем старый (после публикации нового)
+  try { if (old) await old.close(); } catch {}
+
   return sequelizer;
-};
+}
 
 module.exports = { sequelizer, createSequelizeInstance, resetSequelize };

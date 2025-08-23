@@ -1,6 +1,7 @@
 const { BrowserWindow } = require('electron');
 const path = require('path');
-const { UserLog } = require('../database/models');
+const models = require('../database/models');
+
 
 
 class WindowManager {
@@ -29,7 +30,7 @@ class WindowManager {
     if (this.mainWindow && this.mainWindow.webContents.session.userLogId) {
       event.preventDefault();
       try {
-        await UserLog.update(
+        await models.UserLog.update(
           { logout_time: new Date() },
           { where: { Id: this.mainWindow.webContents.session.userLogId } }
         );
