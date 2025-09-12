@@ -1,10 +1,14 @@
-// newCsvReader.js
-const fs = require('fs');
-const csv = require('csv-parser');
-const models = require('../database/models'); // <-- контейнер моделей
 
 // Нормализация ключей: trim + схлопывание внутренних пробелов
 const normalizeKey = (k) => k.replace(/\s+/g, ' ').trim();
+
+// newCsvReader.js
+const fs = require('fs');
+const csv = require('csv-parser');
+
+// ВАЖНО: сначала подключаем db — он вызывает models.initModels(...)
+const db = require('../database/db');
+const models = require('../database/models');
 
 
 
@@ -94,10 +98,20 @@ function rowToModel(cleanRow) {
   }
   return out;
 }
+async function importVesselDataNew(filePath, { authenticate = true, chunkSize = 0 } = {}) {
+  // при необходимости проверяем соединение
+  if (authenticate && db?.sequelizer?.authenticate) {
+    await db.sequelizer.authenticate().catch(() => {/* опционально лог */});
+  }
 
-async function importVesselDataNew(filePath) {
+  // контроль инициализации модели
+  if (!models.MarinFleet || typeof models.MarinFleet.bulkCreate !== 'function') {
+    throw new Error('Model MarinFleet is not initialized. Check database/db initialization.');
+  }
+
+  const results = [];
+
   return new Promise((resolve, reject) => {
-    const results = [];
     fs.createReadStream(filePath)
       .pipe(csv({ separator: ';' }))
       .on('data', (row) => {
@@ -111,17 +125,41 @@ async function importVesselDataNew(filePath) {
       .on('end', async () => {
         try {
           if (!results.length) return resolve('Файл пуст или не распознан.');
-          await models.MarinFleet.bulkCreate(results); // <-- контейнер
+
+          // При больших объёмах можно включить чанкинг
+          if (chunkSize && chunkSize > 0) {
+            for (let i = 0; i < results.length; i += chunkSize) {
+              const chunk = results.slice(i, i + chunkSize);
+              await models.MarinFleet.bulkCreate(chunk, { validate: true });
+            }
+          } else {
+            await models.MarinFleet.bulkCreate(results, { validate: true });
+          }
+
           resolve(`Импортировано записей: ${results.length}`);
         } catch (error) {
-          reject(`Database error: ${error.message}`);
+          reject(new Error(`Database error: ${error.message}`));
         }
       })
       .on('error', (error) => {
-        reject(`CSV processing error: ${error.message}`);
+        reject(new Error(`CSV processing error: ${error.message}`));
       });
   });
 }
 
-// importVesselDataNew("ship_data_razdel_1.csv");
+// importVesselDataNew("ship_data_razdel_3.csv");
 module.exports = { importVesselDataNew };
+// if (require.main === module) {
+//   (async () => {
+//     try {
+//       const file = process.argv[2] || 'ship_data_razdel_3.csv';
+//       const msg = await importVesselDataNew(file);
+//       console.log(msg);
+//     } catch (err) {
+//       console.error('Fatal:', err);
+//       process.exit(1);
+//     } finally {
+//       try { await db.sequelizer.close(); } catch {}
+//     }
+//   })();
+// }

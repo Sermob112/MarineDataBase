@@ -1,6 +1,6 @@
 const { ipcMain } = require('electron');
 const models = require('../database/models');      // <-- контейнер
-const { Op } = require('sequelize');
+const { Op, col } = require('sequelize');
 const { importVesselDataNew } = require('./CsvReaderShipDataByArtem');
 
 class ShipBaseBack {
@@ -17,6 +17,8 @@ class ShipBaseBack {
     ipcMain.handle('get-selected-ship', this.getSelectedShip.bind(this));
     ipcMain.handle('load-ship-details', this.loadShipDetails.bind(this));
     ipcMain.handle('clear-database', this.clearMarinFleet.bind(this));
+    ipcMain.handle('get-index-facets', this.getIndexFacets.bind(this));
+    ipcMain.handle('get-route-page', this.getRoutePage.bind(this));
     ipcMain.handle('import-vessel-data', async (_event, filePath) => {
       try {
         const message = await importVesselDataNew(filePath);
@@ -150,6 +152,129 @@ class ShipBaseBack {
       throw error;
     }
   }
+
+
+
+async bucketByDataSource(dsRaw) {
+  const L = String(dsRaw || '').toLowerCase();
+  if (!L) return 'riverSea';              // по умолчанию
+  if (L.includes('реч') || L.includes('river')) return 'river';
+  if (L.includes('мор') || L.includes('sea'))   return 'sea';
+  return 'riverSea';
+}
+
+
+async getIndexFacets() {
+  try {
+    const { MarinFleet } = require('../database/models');
+
+    const whereRiver = { [Op.or]: [
+      { data_source: { [Op.iLike]: '%реч%' } },
+      { data_source: { [Op.iLike]: '%river%' } },
+    ]};
+
+    const whereSea = { [Op.or]: [
+      { data_source: { [Op.iLike]: '%мор%' } },
+      { data_source: { [Op.iLike]: '%sea%' } },
+    ]};
+
+    const whereNotSeaNotRiver = { [Op.and]: [
+      { data_source: { [Op.notILike]: '%реч%' } },
+      { data_source: { [Op.notILike]: '%river%' } },
+      { data_source: { [Op.notILike]: '%мор%' } },
+      { data_source: { [Op.notILike]: '%sea%' } },
+    ]};
+
+    // riverSea = НЕ содержит ни "реч"/"river", ни "мор"/"sea" ИЛИ data_source IS NULL
+    const whereRiverSea = { [Op.or]: [
+      { data_source: { [Op.is]: null } },
+      whereNotSeaNotRiver
+    ]};
+
+    const [seaCount, riverCount, riverSeaCount] = await Promise.all([
+      MarinFleet.count({ where: whereSea }),
+      MarinFleet.count({ where: whereRiver }),
+      MarinFleet.count({ where: whereRiverSea }),
+    ]);
+
+    return {
+      route: {
+        sea:      { count: seaCount },
+        river:    { count: riverCount },
+        riverSea: { count: riverSeaCount },
+      },
+      cargoBase: {},                   // заполним позже из БД, сейчас фронт использует статический набор
+      movementTypes: ['Самоходные','Несамоходные','Стоечные'],
+      okpd2: [],
+      eskd: [],
+    };
+  } catch (err) {
+    console.error('getIndexFacets error:', err);
+    throw err;
+  }
+}
+
+
+// Постраничная выдача судов для корзины "sea|river|riverSea"
+async getRoutePage(_event, { bucket, offset = 0, limit = 200 }) {
+  try {
+    const { MarinFleet, sequelize } = require('../database/models');
+
+    const whereRiver = { [Op.or]: [
+      { data_source: { [Op.iLike]: '%реч%' } },
+      { data_source: { [Op.iLike]: '%river%' } },
+    ]};
+
+    const whereSea = { [Op.or]: [
+      { data_source: { [Op.iLike]: '%мор%' } },
+      { data_source: { [Op.iLike]: '%sea%' } },
+    ]};
+
+    const whereNotSeaNotRiver = { [Op.and]: [
+      { data_source: { [Op.notILike]: '%реч%' } },
+      { data_source: { [Op.notILike]: '%river%' } },
+      { data_source: { [Op.notILike]: '%мор%' } },
+      { data_source: { [Op.notILike]: '%sea%' } },
+    ]};
+    const whereRiverSea = { [Op.or]: [
+      { data_source: { [Op.is]: null } },
+      whereNotSeaNotRiver
+    ]};
+
+    let where = whereRiverSea;
+    if (bucket === 'sea') where = whereSea;
+    if (bucket === 'river') where = whereRiver;
+
+    const rows = await MarinFleet.findAll({
+      attributes: [
+        'id',
+        [col('imo_number'),   'imo'],
+        [col('vessel_name'),  'name'],
+        [col('reg_number'),   'reg'],
+      ],
+      where,
+      offset,
+      limit,
+      order: [['id', 'ASC']],
+      raw: true
+    });
+
+    return {
+      items: rows.map(r => ({
+        id: r.id,
+        imo: r.imo || '—',
+        name: r.name || '—',
+        reg: r.reg || '—',
+      })),
+      nextOffset: offset + rows.length
+    };
+  } catch (err) {
+    console.error('get-route-page error:', err);
+    throw err;
+  }
+}
+
+  
 }
 
 module.exports = ShipBaseBack;

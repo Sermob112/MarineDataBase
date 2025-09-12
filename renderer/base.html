@@ -1,0 +1,34 @@
+<!-- renderer/base.html (BODY-ONLY) -->
+<!-- ШАПКА -->
+<div class="top-panel">
+  <div class="top-row">
+    <button id="sidebar-toggle" class="icon-btn" type="button" aria-label="Открыть меню">☰</button>
+    <h1 class="page-title" id="page-title">Верхняя панель</h1>
+  </div>
+
+  <!-- Кнопка темы в правом верхнем углу -->
+  <button id="theme-toggle"
+          class="icon-btn icon-btn--ghost"
+          type="button"
+          aria-label="Сменить тему"
+          title="Авто (по системе)">🌗</button>
+
+  <!-- слот для элементов в шапке (необязательно) -->
+  <div id="top-extra"></div>
+</div>
+
+<!-- САЙДБАР -->
+<div class="sidebar">
+  <h2>Меню</h2>
+  <ul>
+    <li><a href="index.html">Список судов</a></li>
+    <li><a href="admin.html">Администратор</a></li>
+    <li><a href="shipFormular.html">Формуляр судна</a></li>
+    <li><a href="analiz.html">Анализ</a></li>
+  </ul>
+</div>
+
+<div class="overlay"></div>
+
+<!-- ОСНОВНОЙ КОНТЕНТ -->
+<main id="content"></main>

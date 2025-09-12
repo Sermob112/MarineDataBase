@@ -1,46 +1,30 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="assets/css/base.css"> <!-- Подключение CSS файла -->
-  <title>Основное окно</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="assets/css/base.css" />
+  <title>Анализ</title>
 </head>
 <body>
-  <div class="top-panel">
-    <h1>Верхняя панель</h1>
-    <form class="search-bar" action="#" method="get">
-      <label for="fieldSelector1">Выберите первый атрибут для анализа:</label>
-  <select id="fieldSelector1"></select>
+  <div id="page-content" data-title="Анализ">
+    <form class="search-bar" action="#" method="get" data-top-extra>
+      <label for="fieldSelector1">Первый атрибут:</label>
+      <select id="fieldSelector1"></select>
+      <label for="fieldSelector2">Второй атрибут:</label>
+      <select id="fieldSelector2">
+        <option value="">-- Не выбрано --</option>
+      </select>
+      <button id="analyzeButton">Анализировать</button>
+      <div id="result-info" style="margin-top:10px;font-weight:bold;"></div>
+    </form>
 
-  <label for="fieldSelector2">Выберите второй атрибут для анализа:</label>
-  <select id="fieldSelector2"><option value="">-- Не выбрано --</option>
-  </select>
-
-  <button id="analyzeButton">Анализировать</button>
-     
-      <div id="result-info" style="margin-top: 10px; font-weight: bold;"></div>
-
-  </form>
+    <div id="table-container">
+      <table id="pivotTable" border="1"></table>
+    </div>
   </div>
- 
-  <div class="sidebar">
-    <h2>Меню</h2>
-    <ul>
-      <li><a href="index.html">Список судов</a></li>
-      <li><a href="admin.html">Администратор</a></li>
-      <li><a href="shipFormular.html">Формуляр судна</a></li>
-      <li><a href="analiz.html">Анализ</a></li>
-    </ul>
-  </div>
-  <button class="floating-button" id="toggleButton">+</button>
-  <button class="sidebar-toggle">⟨</button>
-  <div class="overlay"></div>
-  <div id="table-container">
-    <table id="pivotTable" border="1"></table>
-</div>
- <script src="assets/js/indexScripts.js"></script>
- <script src="assets/js/analizScripts.js"></script>
 
+  <script src="assets/js/Baselayout.js"></script>
+  <script src="assets/js/analizScripts.js"></script>
 </body>
 </html>

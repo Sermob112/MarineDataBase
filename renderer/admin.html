@@ -1,108 +1,64 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="assets/css/base.css"> 
-    <link rel="stylesheet" href="assets/css/admin.css"> <!-- Подключение CSS файла -->
-    <!-- Подключение CSS файла -->
-    <title>Админ панель</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="assets/css/base.css" />
+  <link rel="stylesheet" href="assets/css/admin.css" />
+  <title>Админ панель</title>
 </head>
-<body class="admin">
-
-    <div class="sidebar">
-        <h2>Меню</h2>
-        <ul>
-      
-          <li><a href="index.html">Список судов</a></li>
-          <li><a href="shipFormular.html">Формуляр судна</a></li>
-          <li><a href="analiz.html">Анализ</a></li>
-        </ul>
-      </div>
-      <button class="sidebar-toggle">⟨</button>
-      <div class="overlay"></div>
+<body>
+  <div id="page-content" data-title="Админ панель">
     <div class="tabs">
-        <div class="tab active" data-tab="users">Пользователи</div>
-        <div class="tab" data-tab="userLogs">Журнал пользователей</div>
+      <div class="tab active" data-tab="users">Пользователи</div>
+      <div class="tab" data-tab="userLogs">Журнал пользователей</div>
     </div>
     <div class="tab-content active" id="users">
-    <h1>Пользователи и их роли</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Имя пользователя</th>
-                <th>Роли</th>
-            </tr>
-        </thead>
-        <tbody id="userTableBody">
-            <!-- Пользователи будут добавлены сюда -->
-        </tbody>
-    </table>
+      <!-- ... твоя таблица пользователей и формы ... -->
+      <h1>Пользователи и их роли</h1>
+      <table>
+        <thead> <tr><th>ID</th><th>Имя пользователя</th><th>Роли</th></tr> </thead>
+        <tbody id="userTableBody"></tbody>
+      </table>
 
-    <h2>Добавить нового пользователя</h2>
-    <form id="addUserForm">
-        <input type="text" id="username" placeholder="Имя пользователя" required>
-        <input type="password" id="password" placeholder="Пароль" required>
-    
+      <h2>Добавить нового пользователя</h2>
+      <form id="addUserForm">
+        <input type="text" id="username" placeholder="Имя пользователя" required />
+        <input type="password" id="password" placeholder="Пароль" required />
         <label for="roles">Выберите роли:</label>
         <select id="roles" multiple>
-            <option value="Администратор">Администратор</option>
-            <option value="Редактор">Редактор</option>
-            <option value="Пользователь">Пользователь</option>
-            <option value="Гость">Гость</option>
-            <!-- Добавьте другие роли по необходимости -->
+          <option value="Администратор">Администратор</option>
+          <option value="Редактор">Редактор</option>
+          <option value="Пользователь">Пользователь</option>
+          <option value="Гость">Гость</option>
         </select>
-    
         <button type="submit">Добавить пользователя</button>
-    </form>
-    <h1>Выберите CSV-файл</h1>
-    <input type="file" id="fileInput" accept=".csv" />
-    <button id="uploadButton">Загрузить</button>
+      </form>
 
-    <h1>Сбросить БД</h1>
-    <button id="ClearDBButton">Сбросить БД</button>
-<div id="statusMessage"></div>
+      <h1>Загрузка CSV</h1>
+      <input type="file" id="fileInput" accept=".csv" />
+      <button id="uploadButton">Загрузить</button>
 
-    <div id="editUserModal" style="display: none;">
-        <h2>Редактировать пользователя</h2>
-        <form id="editUserForm">
-            <input type="hidden" id="editUserId">
-            <input type="text" id="editUsername" placeholder="Имя пользователя" required>
-            <input type="password" id="editPassword" placeholder="Пароль" required>
-    
-            <label for="editRoles">Выберите роли:</label>
-            <select id="editRoles" multiple>
-                <option value="Администратор">Администратор</option>
-                <option value="Редактор">Редактор</option>
-                <option value="Пользователь">Пользователь</option>
-                <option value="Гость">Гость</option>
-            </select>
-    
-            <button type="submit">Сохранить изменения</button>
-            <button type="button" onclick="closeEditUserModal()">Отмена</button>
-        </form>
+      <h1>Сбросить БД</h1>
+      <button id="ClearDBButton">Сбросить БД</button>
+      <div id="statusMessage"></div>
+
+      <div id="editUserModal" style="display:none;">
+        <!-- ... форма редактирования ... -->
+      </div>
     </div>
-</div>
-<div class="tab-content" id="userLogs">
-    <h2>Журнал пользователей</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Имя пользователя</th>
-                <th>Время входа</th>
-                <th>Время выхода</th>
-            </tr>
-        </thead>
-        <tbody id="userLogsTableBody">
-            <!-- Данные журнала будут добавлены сюда -->
-        </tbody>
-    </table>
-</div>
 
-    <script src="assets/js/adminScripts.js"></script>
-    <script src="assets/js/indexScripts.js"></script>
+    <div class="tab-content" id="userLogs">
+      <h2>Журнал пользователей</h2>
+      <table>
+        <thead><tr><th>ID</th><th>Имя пользователя</th><th>Вход</th><th>Выход</th></tr></thead>
+        <tbody id="userLogsTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="assets/js/Baselayout.js"></script>
+  <script src="assets/js/adminScripts.js"></script>
+
 </body>
-
 </html>
