@@ -7,14 +7,13 @@
   <link rel="stylesheet" href="assets/css/admin.css" />
   <title>Админ панель</title>
 </head>
-<body>
-  <div id="page-content" data-title="Админ панель">
+<body class="admin" data-theme="light">
+  <div id="page-content" data-title="Панель администратора">
     <div class="tabs">
       <div class="tab active" data-tab="users">Пользователи</div>
       <div class="tab" data-tab="userLogs">Журнал пользователей</div>
     </div>
     <div class="tab-content active" id="users">
-      <!-- ... твоя таблица пользователей и формы ... -->
       <h1>Пользователи и их роли</h1>
       <table>
         <thead> <tr><th>ID</th><th>Имя пользователя</th><th>Роли</th></tr> </thead>
@@ -56,9 +55,8 @@
       </table>
     </div>
   </div>
-
-  <script src="assets/js/Baselayout.js"></script>
   <script src="assets/js/adminScripts.js"></script>
+  <script src="assets/js/Baselayout.js"></script>
 
 </body>
 </html>

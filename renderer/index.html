@@ -50,7 +50,12 @@
               <summary>Река-море</summary>
               <ul id="route-riversea-list" class="disclosure-list" role="listbox"></ul>
             </details>
+            <details>
+              <summary>Прочее</summary>
+              <ul id="route-other-list" class="disclosure-list" role="listbox"></ul>
+            </details>
           </div>
+         
         </details>
       
 
@@ -65,47 +70,43 @@
           </details>
 
           <details>
-            <summary>Категория</summary>
+            <summary>Таблица</summary>
             <ul id="cargo-category-list" class="disclosure-list" role="listbox"></ul>
           </details>
         </div>
       </details>
 
       
-        <!-- 3) Тип движения -->
-        <details class="filter-group" id="movement-group">
-          <summary>Тип движения</summary>
-      
-          <div class="filter-nested">
-            <details>
-              <summary>Самоходные</summary>
-              <ul id="movement-self-list" class="disclosure-list" role="listbox"></ul>
-            </details>
-      
-            <details>
-              <summary>Несамоходные</summary>
-              <ul id="movement-nonself-list" class="disclosure-list" role="listbox"></ul>
-            </details>
-      
-            <details>
-              <summary>Стоечные</summary>
-              <ul id="movement-stationary-list" class="disclosure-list" role="listbox"></ul>
-            </details>
-          </div>
-        </details>
-      
+   
+     <!-- 3) Тип движения -->
+<details class="filter-group" id="movement-group">
+  <summary>Тип движения</summary>
+
+  <div class="filter-nested">
+    <details open>
+      <summary>Тип</summary>
+      <ul id="movement-type-list" class="disclosure-list" role="listbox"></ul>
+    </details>
+
+    <details>
+      <summary>Суда</summary>
+      <ul id="movement-vessels-list" class="disclosure-list" role="listbox"></ul>
+    </details>
+  </div>
+</details>
+
 
   <!-- 4) ОКПД2 -->
-  <fieldset class="filter-group">
-    <legend>ОКПД2</legend>
+  <details class="filter-group">
+    <summary>ОКПД2</summary>
     <select id="okpd2" class="filter"></select>
-  </fieldset>
+  </details>
 
   <!-- 5) ЕСКД -->
-  <fieldset class="filter-group">
-    <legend>ЕСКД</legend>
+  <details class="filter-group">
+    <summary>ЕСКД</summary>
     <select id="eskd" class="filter"></select>
-  </fieldset>
+  </details>
 </div>
 
     </section>

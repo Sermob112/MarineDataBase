@@ -1,16 +1,29 @@
-body.admin {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f5f5f5;
-    display: grid;
-    grid-template-rows: 100px auto 1fr; /* Три строки: панель, таблица, резерв */
-    height: 100vh; /* Высота экрана для сетки */
-    gap: 10px; /* Промежутки между строками */
-    box-sizing: border-box;
-}
+/* admin.css */
 
-#ClearDBButton
-{
-    color: red;
-}
+body.admin {
+    /* перебиваем базовую сетку body из base.css */
+    display: grid;
+    grid-template-rows: 100px auto 1fr; /* как и было у тебя */
+    height: 100vh;
+    gap: 10px;
+    box-sizing: border-box;
+    /* можно использовать переменные из base.css, если хочешь единый вид */
+    background: var(--bg);
+    color: var(--text);
+    font-family: Arial, sans-serif;
+  }
+  
+  /* Приоритетные переопределения внутри админки */
+  body.admin table,
+  body.admin th,
+  body.admin td,
+  body.admin button,
+  body.admin input,
+  body.admin select,
+  body.admin textarea {
+    /* если нужно — добавляй тут отличия админки от базы */
+  }
+  
+  /* Пример: выделение опасной кнопки сброса БД */
+  #ClearDBButton { color: red; }
+  

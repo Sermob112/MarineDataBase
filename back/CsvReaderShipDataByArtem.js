@@ -149,17 +149,3 @@ async function importVesselDataNew(filePath, { authenticate = true, chunkSize = 
 
 // importVesselDataNew("ship_data_razdel_3.csv");
 module.exports = { importVesselDataNew };
-// if (require.main === module) {
-//   (async () => {
-//     try {
-//       const file = process.argv[2] || 'ship_data_razdel_3.csv';
-//       const msg = await importVesselDataNew(file);
-//       console.log(msg);
-//     } catch (err) {
-//       console.error('Fatal:', err);
-//       process.exit(1);
-//     } finally {
-//       try { await db.sequelizer.close(); } catch {}
-//     }
-//   })();
-// }

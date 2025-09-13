@@ -1,11 +1,9 @@
 // renderer/assets/js/indexScripts.js
-// Путевые условия: постраничная подгрузка + шапки колонок
-// Грузовая база: раскрывающийся список "Тип → Категория" (пока статический набор)
-(function () {
+(() => {
   if (window.__indexPageInit) return;
   window.__indexPageInit = true;
 
-  // ждём, пока Baselayout подменит body
+  // ждём, пока Baselayout соберёт каркас
   if (window.__layoutLoaded) init();
   else document.addEventListener('layout:ready', init, { once: true });
 
@@ -14,108 +12,111 @@
   async function init() {
     const { ipcRenderer } = require('electron');
 
-    // ---------- ПУТЕВЫЕ УСЛОВИЯ ----------
+    // Универсальный переход в формуляр
+    async function openFormularByLi(li) {
+      const id = Number(li?.dataset?.id);
+      if (!id) return;
+      const model = li?.dataset?.model === 'SeaFleet' ? 'SeaFleet' : 'MarinFleet';
+      await ipcRenderer.invoke('load-ship-details', { id, model });
+      window.location.href = 'shipFormular.html';
+    }
+
+    // Вставка шапки таблицы перед UL
+    function injectHeader(ul, key = '') {
+      const parent = ul.parentElement;
+      const dataFor = key || ul.id || '';
+      if (!parent.querySelector(`.disclosure-head[data-for="${dataFor}"]`)) {
+        const head = document.createElement('div');
+        head.className = 'disclosure-head';
+        head.dataset.for = dataFor;
+        head.innerHTML = `
+          <span class="disclosure-item__imo">IMO</span>
+          <span class="disclosure-item__name">Название</span>
+          <span class="disclosure-item__reg">Рег. №</span>
+        `;
+        parent.insertBefore(head, ul);
+      }
+    }
+
+    // Добавление строк (3 колонки) в список UL
+    function appendItems(ul, items, modelName) {
+      const frag = document.createDocumentFragment();
+      (items || []).forEach(it => {
+        const li = document.createElement('li');
+        li.className = 'disclosure-item';
+        li.dataset.id = it.id;
+        li.dataset.model = modelName; // SeaFleet | MarinFleet
+
+        const c1 = document.createElement('span'); c1.className = 'disclosure-item__imo';  c1.textContent = it.imo  || '—';
+        const c2 = document.createElement('span'); c2.className = 'disclosure-item__name'; c2.textContent = it.name || '—';
+        const c3 = document.createElement('span'); c3.className = 'disclosure-item__reg';  c3.textContent = it.reg  || '—';
+        li.append(c1,c2,c3);
+        frag.appendChild(li);
+      });
+      ul.appendChild(frag);
+    }
+
+    // ============= ПУТЕВЫЕ УСЛОВИЯ (ленивая подгрузка по ведрам) =============
     const BUCKETS = {
-      sea:      { ulSel: '#route-sea-list',      label: 'Морские'   },
-      river:    { ulSel: '#route-river-list',    label: 'Речные'    },
-      riverSea: { ulSel: '#route-riversea-list', label: 'Река-море' }
+      sea:      { ulSel: '#route-sea-list',      label: 'Морские',   model: 'SeaFleet'   },
+      river:    { ulSel: '#route-river-list',    label: 'Речные',    model: 'MarinFleet' },
+      riverSea: { ulSel: '#route-riversea-list', label: 'Река-море', model: 'MarinFleet' },
+      other:    { ulSel: '#route-other-list',    label: 'Прочее',    model: 'MarinFleet' }
     };
 
-    // навешиваем хедеры (IMO | Название | Рег.№) и ленивую загрузку
-    const state = {};
-    for (const [key, cfg] of Object.entries(BUCKETS)) {
+    const routeState = {}; // bucket -> { ul, offset, busy, done }
+
+    for (const [bucket, cfg] of Object.entries(BUCKETS)) {
       const ul = $(cfg.ulSel);
       if (!ul) continue;
 
-      // вставим "шапку" перед списком
-      injectHeader(ul);
+      injectHeader(ul); // шапка «IMO | Название | Рег. №»
+      routeState[bucket] = { ul, offset: 0, busy: false, done: false };
 
-      state[key] = { ul, offset: 0, busy: false, done: false };
+      // клик по строке -> формуляр
+      ul.addEventListener('click', (e) => {
+        const li = e.target.closest('.disclosure-item');
+        if (li) openFormularByLi(li);
+      });
 
       // бесконечная прокрутка
       ul.addEventListener('scroll', () => {
         if (ul.scrollTop + ul.clientHeight >= ul.scrollHeight - 20) {
-          loadPage(key);
+          loadRoutePage(bucket);
         }
       }, { passive: true });
 
-      // при первом раскрытии — загрузим 1-ю страницу
+      // при первом раскрытии — грузим первую страницу
       const details = ul.closest('details');
       if (details) {
         details.addEventListener('toggle', () => {
-          if (details.open && state[key].offset === 0 && !state[key].busy) {
-            loadPage(key);
-          }
+          const st = routeState[bucket];
+          if (details.open && st.offset === 0 && !st.busy) loadRoutePage(bucket);
         });
       }
     }
-
-    // проставим счётчики в summary
+    for (const [bucket, st] of Object.entries(routeState)) {
+      const details = st.ul.closest('details');
+      if (details && details.open && st.offset === 0 && !st.busy) {
+        loadRoutePage(bucket); // автозагрузка для уже открытых секций
+      }
+    }
+    // счётчики в summary
     try {
       const facets = await ipcRenderer.invoke('get-index-facets');
       if (facets?.route) {
-        setSummaryCount('#route-group details:nth-child(1) > summary', 'Морские',   facets.route.sea?.count ?? 0);
-        setSummaryCount('#route-group details:nth-child(2) > summary', 'Речные',    facets.route.river?.count ?? 0);
-        setSummaryCount('#route-group details:nth-child(3) > summary', 'Река-море', facets.route.riverSea?.count ?? 0);
+        for (const [bucket, cfg] of Object.entries(BUCKETS)) {
+          const ul = $(cfg.ulSel);
+          const summary = ul?.closest('details')?.querySelector('summary');
+          if (summary) summary.textContent = `${cfg.label} (${facets.route[bucket]?.count ?? 0})`;
+        }
       }
     } catch (e) {
       console.error('get-index-facets failed:', e);
     }
 
-    // функция дорисовки строк (3 колонки)
-    function appendItems(ul, items) {
-      const frag = document.createDocumentFragment();
-      for (const it of (items || [])) {
-        const li = document.createElement('li');
-        li.className = 'disclosure-item';
-        li.dataset.id = it.id;
-
-        frag.appendChild(buildRow(it.imo, it.name, it.reg, li));
-      }
-      ul.appendChild(frag);
-    }
-
-    function buildRow(imo, name, reg, liEl) {
-      const li = liEl || document.createElement('li');
-      li.className = 'disclosure-item';
-
-      const c1 = document.createElement('span');
-      c1.className = 'disclosure-item__imo';
-      c1.textContent = imo ?? '—';
-
-      const c2 = document.createElement('span');
-      c2.className = 'disclosure-item__name';
-      c2.textContent = name ?? '—';
-
-      const c3 = document.createElement('span');
-      c3.className = 'disclosure-item__reg';
-      c3.textContent = reg ?? '—';
-
-      li.append(c1, c2, c3);
-      return li;
-    }
-
-    function injectHeader(ul) {
-      // хедер как "липкая" строка над UL
-      const head = document.createElement('div');
-      head.className = 'disclosure-head';
-      head.innerHTML = `
-        <span class="disclosure-item__imo">IMO</span>
-        <span class="disclosure-item__name">Название</span>
-        <span class="disclosure-item__reg">Рег. №</span>
-      `;
-      // вставим прямо перед UL
-      const parent = ul.parentElement;
-      parent.insertBefore(head, ul);
-    }
-
-    function setSummaryCount(selector, label, count) {
-      const s = $(selector);
-      if (s) s.textContent = `${label} (${count})`;
-    }
-
-    async function loadPage(bucket) {
-      const st = state[bucket];
+    async function loadRoutePage(bucket) {
+      const st = routeState[bucket];
       if (!st || st.busy || st.done) return;
 
       st.busy = true;
@@ -138,7 +139,8 @@
           }
         } else {
           if (ul.dataset.loading) { ul.dataset.loading = ''; ul.innerHTML = ''; }
-          appendItems(ul, items);
+          const modelName = BUCKETS[bucket].model;
+          appendItems(ul, items, modelName);
           st.offset = nextOffset;
         }
       } catch (err) {
@@ -152,111 +154,224 @@
       }
     }
 
-    // ---------- ГРУЗОВАЯ БАЗА (Тип → Категория) ----------
-    // статический набор, чтобы вернуть UI (позже подключим из БД)
-    const cargoData = {
-      'Сухогрузы': [
-        'Навалочные (Bulk carrier)',
-        'Генеральные (Break-bulk)',
-        'Лесовозы',
-        'Рефрижераторные',
-        'Контейнеровозы',
-        'RO-RO (сухогрузные)'
-      ],
-      'Наливные': [
-        'Нефтеналивные (Crude)',
-        'Продуктовозы (Product)',
-        'Химовозы',
-        'Газовозы LNG',
-        'Газовозы LPG'
-      ],
-      'Пассажирские': [
-        'Круизные',
-        'Паромы (Ferry)',
-        'Высокоскоростные (HSC)'
-      ],
-      'RO-RO / Ро-пакс': [
-        'Автомобилевозы (Car carrier)',
-        'Ро-пакс (грузопассажирские)',
-        'Трейлеровозы'
-      ],
-      'Специальные / Служебные': [
-        'Буксиры',
-        'Снабжение (PSV/OSV)',
-        'Научно-исследовательские',
-        'Рыбопромысловые',
-        'Дноуглубительные (земснаряды)',
-        'Кабелеукладчики'
-      ]
-    };
+    // ============= ГРУЗОВАЯ БАЗА (Тип main_type из SeaFleet) =============
+    (function initCargoBase(){
+      const typeUL = $('#cargo-type-list');
+      const catUL  = $('#cargo-category-list'); // правая таблица
+      if (!typeUL || !catUL) return;
 
-    function renderList(ul, items){
-      ul.innerHTML = '';
-      const frag = document.createDocumentFragment();
-      (items || []).forEach(txt => {
-        const li = document.createElement('li');
-        li.className = 'disclosure-item';
-        // для единообразия сетки 3-колонки: кладём в среднюю колонку
-        li.append(
-          document.createElement('span'),
-          Object.assign(document.createElement('span'), { textContent: txt }),
-          document.createElement('span')
-        );
-        frag.appendChild(li);
-      });
-      ul.appendChild(frag);
-    }
-    function makeSingleSelectable(ul, onChange){
-      ul.addEventListener('click', (e)=>{
+      // шапка справа
+      injectHeader(catUL, 'cargo');
+
+      let currentType = null;
+      const cargoState = { offset: 0, busy: false, done: false };
+
+      // загрузка типов
+      (async () => {
+        try {
+          const types = await ipcRenderer.invoke('get-seafleet-types'); // [{type, count}]
+          renderTypeList(types);
+        } catch (e) {
+          console.error('get-seafleet-types failed', e);
+          renderTypeList([]);
+        }
+      })();
+
+      // выбор типа слева
+      typeUL.addEventListener('click', (e) => {
         const li = e.target.closest('.disclosure-item');
         if (!li) return;
-        ul.querySelectorAll('.disclosure-item.is-selected').forEach(x => x.classList.remove('is-selected'));
+        typeUL.querySelectorAll('.disclosure-item.is-selected').forEach(x => x.classList.remove('is-selected'));
         li.classList.add('is-selected');
-        onChange?.(li.textContent.trim());
-      });
-    }
 
-    const typeUL = document.getElementById('cargo-type-list');
-    const catUL  = document.getElementById('cargo-category-list');
+        currentType = li.dataset.type || li.textContent.trim();
+        resetCat();
+        loadCatPage();
 
-    if (typeUL && catUL) {
-      renderList(typeUL, Object.keys(cargoData));
-      renderList(catUL, []);
-
-      makeSingleSelectable(typeUL, (typeName) => {
-        const cats = cargoData[typeName] || [];
-        renderList(catUL, cats);
         const det = catUL.closest('details');
-        if (cats.length && det && !det.open) det.open = true;
+        if (det && !det.open) det.open = true;
       });
 
-      makeSingleSelectable(catUL, (cat) => {
-        // тут можно дернуть фильтр по базе по выбранному типу/категории
-        // console.log('Cargo selected:', cat);
+      // догрузка
+      catUL.addEventListener('scroll', () => {
+        if (catUL.scrollTop + catUL.clientHeight >= catUL.scrollHeight - 20) {
+          loadCatPage();
+        }
+      }, { passive: true });
+
+      // клик по строке
+      catUL.addEventListener('click', (e) => {
+        const li = e.target.closest('.disclosure-item');
+        if (li) openFormularByLi(li);
       });
-    }
 
-    // внутри init() после того как создал state и loaders для sea/river/riverSea:
-    function onRowClick(e){
-      const li = e.target.closest('.disclosure-item');
-      if (!li || !li.dataset.id) return;
-      openFormular(li.dataset.id);
-    }
-    Object.values(state).forEach(({ ul }) => {
-      ul.addEventListener('click', onRowClick);
-    });
+      function renderTypeList(types) {
+        typeUL.innerHTML = '';
+        if (!types || !types.length) {
+          typeUL.innerHTML = '<li class="disclosure-item"><span></span><span>(нет данных)</span><span></span></li>';
+          return;
+        }
+        const frag = document.createDocumentFragment();
+        types.forEach(t => {
+          const li = document.createElement('li');
+          li.className = 'disclosure-item';
+          li.dataset.type = t.type;
 
-    // переход в формуляр
-    async function openFormular(shipId) {
-      try {
-        const { ipcRenderer } = require('electron');
-        await ipcRenderer.invoke('load-ship-details', Number(shipId));
-        // переходим на страницу формуляра
-        window.location.href = 'shipFormular.html';
-      } catch (err) {
-        console.error('openFormular failed', err);
+          const c1 = document.createElement('span');
+          const c2 = document.createElement('span'); c2.textContent = t.type;
+          const c3 = document.createElement('span'); c3.textContent = String(t.count ?? '');
+          c3.style.justifySelf = 'end';
+
+          li.append(c1,c2,c3);
+          frag.appendChild(li);
+        });
+        typeUL.appendChild(frag);
       }
-    }
 
+      function resetCat(){
+        cargoState.offset = 0;
+        cargoState.busy = false;
+        cargoState.done = false;
+        catUL.dataset.loading = '1';
+        catUL.innerHTML = '<li class="disclosure-item"><span>Загрузка…</span><span></span><span></span></li>';
+      }
+
+      async function loadCatPage(){
+        if (!currentType || cargoState.busy || cargoState.done) return;
+        cargoState.busy = true;
+        try {
+          const { items, nextOffset } = await ipcRenderer.invoke('get-seafleet-by-type', {
+            type: currentType, offset: cargoState.offset, limit: 200
+          });
+          if (!items || !items.length) {
+            cargoState.done = true;
+            if (cargoState.offset === 0) {
+              catUL.innerHTML = '<li class="disclosure-item"><span>(нет данных)</span><span></span><span></span></li>';
+            }
+          } else {
+            if (catUL.dataset.loading) { catUL.dataset.loading = ''; catUL.innerHTML = ''; }
+            appendItems(catUL, items, 'SeaFleet');
+            cargoState.offset = nextOffset;
+          }
+        } catch (e) {
+          console.error('get-seafleet-by-type failed', e);
+          cargoState.done = true;
+          if (cargoState.offset === 0) {
+            catUL.innerHTML = '<li class="disclosure-item"><span>Ошибка загрузки</span><span></span><span></span></li>';
+          }
+        } finally {
+          cargoState.busy = false;
+        }
+      }
+    })();
+
+    // ============= ТИП ДВИЖЕНИЯ (propulsion_type из SeaFleet) =============
+    (function initMovement(){
+      const typeUL  = $('#movement-type-list');     // слева — уникальные propulsion_type
+      const tableUL = $('#movement-vessels-list');  // справа — суда выбранного типа
+      if (!typeUL || !tableUL) return;
+
+      injectHeader(tableUL, 'movement');
+      let currentType = null;
+      const mvState = { offset: 0, busy: false, done: false };
+
+      // загрузка уникальных типов
+      (async () => {
+        try {
+          const types = await ipcRenderer.invoke('get-movement-types'); // [{type,count}]
+          renderTypeList(types);
+        } catch (e) {
+          console.error('get-movement-types failed:', e);
+          renderTypeList([]);
+        }
+      })();
+
+      // выбор типа
+      typeUL.addEventListener('click', (e) => {
+        const li = e.target.closest('.disclosure-item');
+        if (!li) return;
+        typeUL.querySelectorAll('.disclosure-item.is-selected').forEach(x => x.classList.remove('is-selected'));
+        li.classList.add('is-selected');
+
+        currentType = li.dataset.type || li.textContent.trim();
+        resetTable();
+        loadPage();
+
+        const det = tableUL.closest('details');
+        if (det && !det.open) det.open = true;
+      });
+
+      // догрузка
+      tableUL.addEventListener('scroll', () => {
+        if (tableUL.scrollTop + tableUL.clientHeight >= tableUL.scrollHeight - 20) {
+          loadPage();
+        }
+      }, { passive: true });
+
+      // клик -> формуляр
+      tableUL.addEventListener('click', (e) => {
+        const li = e.target.closest('.disclosure-item');
+        if (li) openFormularByLi(li);
+      });
+
+      function renderTypeList(types){
+        typeUL.innerHTML = '';
+        if (!types || !types.length) {
+          typeUL.innerHTML = '<li class="disclosure-item"><span></span><span>(нет данных)</span><span></span></li>';
+          return;
+        }
+        const frag = document.createDocumentFragment();
+        for (const t of types) {
+          const li = document.createElement('li');
+          li.className = 'disclosure-item';
+          li.dataset.type = t.type;
+
+          const c1 = document.createElement('span');
+          const c2 = document.createElement('span'); c2.textContent = t.type;
+          const c3 = document.createElement('span'); c3.textContent = String(t.count ?? '');
+          c3.style.justifySelf = 'end';
+
+          li.append(c1,c2,c3);
+          frag.appendChild(li);
+        }
+        typeUL.appendChild(frag);
+      }
+
+      function resetTable(){
+        mvState.offset = 0;
+        mvState.busy = false;
+        mvState.done = false;
+        tableUL.dataset.loading = '1';
+        tableUL.innerHTML = '<li class="disclosure-item"><span>Загрузка…</span><span></span><span></span></li>';
+      }
+
+      async function loadPage(){
+        if (!currentType || mvState.busy || mvState.done) return;
+        mvState.busy = true;
+        try {
+          const { items, nextOffset } = await ipcRenderer.invoke('get-movement-by-type', {
+            type: currentType, offset: mvState.offset, limit: 200
+          });
+          if (!items || !items.length) {
+            mvState.done = true;
+            if (mvState.offset === 0) {
+              tableUL.innerHTML = '<li class="disclosure-item"><span>(нет данных)</span><span></span><span></span></li>';
+            }
+          } else {
+            if (tableUL.dataset.loading) { tableUL.dataset.loading = ''; tableUL.innerHTML = ''; }
+            appendItems(tableUL, items, 'SeaFleet');
+            mvState.offset = nextOffset;
+          }
+        } catch (e) {
+          console.error('get-movement-by-type failed:', e);
+          mvState.done = true;
+          if (mvState.offset === 0) {
+            tableUL.innerHTML = '<li class="disclosure-item"><span>Ошибка загрузки</span><span></span><span></span></li>';
+          }
+        } finally {
+          mvState.busy = false;
+        }
+      }
+    })();
   }
 })();

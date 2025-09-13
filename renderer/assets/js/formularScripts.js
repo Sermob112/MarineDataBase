@@ -1,14 +1,14 @@
 // assets/js/formularScripts.js
 const { ipcRenderer } = require('electron');
 
-// Русский заголовок -> поле модели
-const fieldTranslations  = {
+/** Русский заголовок -> поле модели (унифицированные имена как в MarinFleet) */
+const fieldTranslations = {
   // ==== Идентификация / общие ====
   'Название судна': 'vessel_name',
   'Регистровый номер': 'reg_number',
-  'Регис тровый номер': 'reg_number',                 // ALIAS (с пробелом)
+  'Регис тровый номер': 'reg_number',        // ALIAS (с пробелом)
   'Номер ИМО': 'imo_number',
-  'IMO': 'imo_number',                                 // ALIAS
+  'IMO': 'imo_number',                        // ALIAS
   'MMSI': 'mmsi',
   'Бывшее название': 'former_name',
   'Позывной': 'callsign',
@@ -18,9 +18,9 @@ const fieldTranslations  = {
   'Переоборудование/модернизация существенного характера': 'major_conversion',
   'Основной тип': 'main_type',
   'Проект судна': 'vessel_project',
-  'Назначение судна': 'vessel_purpose',               // NEW
-  'Формула класса': 'class_formula',                  // NEW
-  'Источник данных': 'data_source',                   // NEW
+  'Назначение судна': 'vessel_purpose',
+  'Формула класса': 'class_formula',
+  'Источник данных': 'data_source',
   'Источник': 'source',
 
   // ==== Постройка / места ====
@@ -34,7 +34,7 @@ const fieldTranslations  = {
   'Город достройки': 'refit_city',
 
   // ==== Регистрация / статус ====
-  'Учреждение регистрации': 'registration_authority', // NEW
+  'Учреждение регистрации': 'registration_authority',
   'Регистрация': 'registration',
   'Текущее состояние': 'current_status',
   'Владелец': 'owner',
@@ -43,7 +43,7 @@ const fieldTranslations  = {
 
   // ==== Даты строительства ====
   'Заложено': 'laid_down_date',
-  'Дата закладки киля': 'keel_laying_date',          // NEW
+  'Дата закладки киля': 'keel_laying_date',
   'Дата значительной части': 'major_part_date',
   'Значительная часть': 'major_part',
   'Дата постройки (первое освидетельствование)': 'first_inspection_date',
@@ -51,8 +51,8 @@ const fieldTranslations  = {
   'Построено': 'completion_date',
 
   // ==== Размерения / вместимости ====
-  'Длина наибольшая (теоретическая)': 'max_length',
-  'Длина наибольшая теоретическая': 'max_length',    // ALIAS
+  'Длина наибольшая (теоретическая)': 'max_length', // SeaFleet unified
+  'Длина наибольшая теоретическая': 'max_length',
   'Длина габаритная': 'overall_length',
   'Длина расчетная': 'calc_length',
   'Длина конструктивная': 'design_length',
@@ -60,7 +60,7 @@ const fieldTranslations  = {
   'Ширина конструктивная': 'design_width',
   'Высота борта': 'side_height',
   'Высота надводного борта': 'freeboard_height',
-  'Надводный борт': 'freeboard_height',              // ALIAS (NEW ключ)
+  'Надводный борт': 'freeboard_height',
   'Осадка': 'draft',
   'Валовая вместимость': 'gross_tonnage',
   'Чистая вместимость': 'net_tonnage',
@@ -71,19 +71,19 @@ const fieldTranslations  = {
 
   // ==== Пассажиры / экипаж ====
   'Экипаж': 'crew_size',
-  'Численность экипажа': 'crew_size',                // ALIAS (NEW ключ)
+  'Численность экипажа': 'crew_size',
   'Число пассажиров коечные': 'bed_passenger_count',
   'Число пассажиров бескоечных': 'non_bed_passenger_count',
   'Пассажировместимость': 'passenger_capacity',
-  'Общее число пассажиров': 'passenger_capacity',    // ALIAS (NEW ключ)
+  'Общее число пассажиров': 'passenger_capacity',
 
   // ==== Грузовые / переборки / танки / контейнеры ====
   'Количество палуб': 'deck_count',
   'Количество переборок': 'transverse_bulkheads_count',
-  'Количество переборок поперечных': 'transverse_bulkheads_count', // ALIAS (NEW ключ)
+  'Количество переборок поперечных': 'transverse_bulkheads_count',
   'Количество продольных переборок': 'longitudinal_bulkheads_count',
-  'Количество переборок продольных': 'longitudinal_bulkheads_count', // ALIAS (NEW ключ)
-  'Общее количество переборок': 'bulkheads_total_count', // NEW
+  'Количество переборок продольных': 'longitudinal_bulkheads_count',
+  'Общее количество переборок': 'bulkheads_total_count',
 
   'Количество грузовых трюмов': 'cargo_hold_count',
   'Грузовые люки (число и размер в свету)': 'cargo_hatches',
@@ -91,11 +91,11 @@ const fieldTranslations  = {
   'Краны': 'cranes',
 
   'Охлаждаемые грузовые помещения': 'refrigerated_cargo_space',
-  'Количество охлаждаемых грузовых помещений': 'refrigerated_cargo_space_count', // NEW
-  'Вместимость охлаждаемого грузового помещения': 'refrigerated_cargo_space_capacity', // NEW
+  'Количество охлаждаемых грузовых помещений': 'refrigerated_cargo_space_count',
+  'Вместимость охлаждаемого грузового помещения': 'refrigerated_cargo_space_capacity',
 
-  'Количество наливных танков': 'tanks_count',       // FIX (раньше было total_tank_volume)
-  'Объём наливного танка': 'tank_volume',            // NEW
+  'Количество наливных танков': 'tanks_count',
+  'Объём наливного танка': 'tank_volume',
   'Суммарный объем наливных танков': 'total_tank_volume',
 
   'Количество контейнеров': 'container_count',
@@ -104,11 +104,11 @@ const fieldTranslations  = {
   // ==== Энергетика / пропульсивный комплекс ====
   'Тип силовой установки': 'propulsion_type',
   'Тип движителей': 'propulsion_type',
-  'Тип движителя': 'propulsor_type',                // NEW (не путать с propulsion_type)
+  'Тип движителя': 'propulsor_type',
   'Главные двигатели': 'main_engines',
   'Марка главной силовой установки': 'propulsion_model',
-  'Заводская модель главного двигателя': 'main_engine_model', // NEW
-  'Количество лопастей': 'propeller_count',
+  'Заводская модель главного двигателя': 'main_engine_model',
+  'Количество лопастей': 'propeller_count', // у SeaFleet есть blades_count — покажем фолбэком если нет маппинга
   'Общая мощность генераторов': 'total_generator_power',
   'ГЭД, всего': 'total_electric_generators',
   'ГЭД, кВт всех': 'total_generator_power',
@@ -130,10 +130,21 @@ const fieldTranslations  = {
   'Характеристика снабжения': 'supply_characteristics',
   'Категория якорных цепей': 'anchor_chain_category',
   'Калибр якорных цепей': 'anchor_chain_caliber',
-  'Примечания': 'notes'
+  'Примечания': 'notes',
+
+  // ==== Морские "оригинальные" ключи (на случай, если модель не унифицирована) ====
+  'Материал корпуса': 'hull_material',
+  'Количество и тип движителя': 'propulsor_count_type',
+  'Количество и мощность генераторов': 'generators_count_power',
+  'Количество и мощность ГЭД': 'ged_count_power',
+  'Наливные танки': 'tanks_info',
+  'Количество и тип контейнеров': 'container_count_type',
+  'Грузовые люки (мор.)': 'cargo_hatches_info',
+  'Количество грузовых трюмов (мор.)': 'cargo_hold_count_volume',
+  'Лопасти (шт.)': 'blades_count',
 };
 
-// Раскладка по секциям <details>
+/** Секции <details> в shipFormular.html */
 const categories = {
   generalInfo: [
     'Название судна', 'Регистровый номер', 'Регис тровый номер', 'Номер ИМО', 'IMO',
@@ -145,7 +156,9 @@ const categories = {
     'Завод постройки', 'Город постройки', 'Завод достройки', 'Город достройки',
     'Заложено', 'Дата закладки киля', 'Дата значительной части',
     'Дата постройки (первое освидетельствование)', 'Спущено на воду', 'Построено',
-    'Проект судна', 'Назначение судна', 'Формула класса'
+    'Проект судна', 'Назначение судна', 'Формула класса',
+    // добавим материал корпуса сюда
+    'Материал корпуса'
   ],
   dimensions: [
     'Длина наибольшая (теоретическая)', 'Длина наибольшая теоретическая',
@@ -165,15 +178,20 @@ const categories = {
     'Количество охлаждаемых грузовых помещений', 'Вместимость охлаждаемого грузового помещения',
     'Количество грузовых трюмов', 'Количество контейнеров', 'Тип контейнеров',
     'Грузовые люки (число и размер в свету)', 'Стрелы', 'Краны',
-    'Количество наливных танков', 'Объём наливного танка', 'Суммарный объем наливных танков'
+    'Количество наливных танков', 'Объём наливного танка', 'Суммарный объем наливных танков',
+    // морские оригинальные названия — на всякий случай
+    'Наливные танки', 'Количество и тип контейнеров', 'Грузовые люки (мор.)', 'Количество грузовых трюмов (мор.)'
   ],
   propulsion: [
     'Тип силовой установки', 'Тип движителей', 'Тип движителя',
     'Главные двигатели', 'Марка главной силовой установки', 'Заводская модель главного двигателя',
     'Общая мощность генераторов', 'ГЭД, всего', 'ГЭД, кВт всех',
     'Количество движителей', 'Количество ГЭД', 'Общая мощность ГЭД',
-    'Количество лопастей', 'Главные котлы', 'Радио-навигационное оборудование',
-    'Скорость'
+    'Количество лопастей', 'Лопасти (шт.)',
+    'Главные котлы', 'Радио-навигационное оборудование',
+    'Скорость',
+    // морские оригинальные
+    'Количество и тип движителя', 'Количество и мощность генераторов', 'Количество и мощность ГЭД'
   ],
   miscellaneous: [
     'Примечания', 'Источник', 'Источник данных',
@@ -183,50 +201,84 @@ const categories = {
   ]
 };
 
-// Рендер деталей выбранной записи
+// Обратная карта: поле модели -> русский заголовок (первое совпадение)
+const DB_TO_RU = (() => {
+  const map = new Map();
+  for (const [ru, db] of Object.entries(fieldTranslations)) {
+    if (!map.has(db)) map.set(db, ru);
+  }
+  return map;
+})();
+
+function $q(sel) { return document.querySelector(sel); }
+function clearAllTables() {
+  document.querySelectorAll('details table').forEach(t => t.innerHTML = '');
+}
+function appendRowTo(categoryId, label, value) {
+  const tbl = $q(`#${categoryId} table`);
+  if (!tbl) return false;
+  const tr = document.createElement('tr');
+  const tdK = document.createElement('td'); tdK.textContent = label;
+  const tdV = document.createElement('td'); tdV.textContent =
+    (value === null || value === undefined || value === '') ? '—' : String(value);
+  tr.append(tdK, tdV);
+  tbl.appendChild(tr);
+  return true;
+}
+
+function placeRow(label, value) {
+  // Пытаемся найти секцию по человеческому заголовку
+  for (const [catId, list] of Object.entries(categories)) {
+    if (list.includes(label)) {
+      if (appendRowTo(catId, label, value)) return;
+    }
+  }
+  // Если не нашли — кладём в "Прочее"
+  appendRowTo('miscellaneous', label, value);
+}
+
 async function loadShipDetails() {
   try {
-    const { selectedShip, totalShips } = await ipcRenderer.invoke('get-selected-ship');
-    document.querySelectorAll('details table').forEach(table => table.innerHTML = '');
+    const resp = await ipcRenderer.invoke('get-selected-ship'); // { selectedShip, model, totalShips? }
+    const selectedShip = resp?.selectedShip || {};
+    
+    const model = resp?.model || 'MarinFleet';
+    const totalShips = resp?.totalShips;
+    console.log('MODEL:', model, 'FIELDS:', Object.keys(selectedShip));
+    clearAllTables();
 
-    Object.entries(selectedShip).forEach(([key, value]) => {
-      // Ищем русский заголовок по имени поля в БД
-      const translatedKey = Object.keys(fieldTranslations).find(
-        rusKey => fieldTranslations[rusKey] === key
-      );
-
-      if (translatedKey) {
-        const row = document.createElement('tr');
-        const fieldCell = document.createElement('td');
-        fieldCell.textContent = translatedKey;
-        const valueCell = document.createElement('td');
-        valueCell.textContent = (value === null || value === undefined || value === '') ? '—' : value;
-
-        row.appendChild(fieldCell);
-        row.appendChild(valueCell);
-
-        // Определяем секцию
-        for (const [categoryId, fields] of Object.entries(categories)) {
-          if (fields.includes(translatedKey)) {
-            const tbl = document.querySelector(`#${categoryId} table`);
-            if (tbl) tbl.appendChild(row);
-            return;
-          }
-        }
-
-        // если поле не попало ни в одну категорию — складываем в "Прочее"
-        document.querySelector('#miscellaneous table').appendChild(row);
-      }
-    });
-
-    const recordStatus = document.getElementById('recordStatus');
-    if (recordStatus) {
-      recordStatus.textContent = `Запись ID: ${selectedShip.id} из ${totalShips} записей`;
+    // Статус/заголовок
+    const status = $q('#recordStatus');
+    if (status) {
+      const idText = selectedShip?.id ? `ID: ${selectedShip.id}` : '—';
+      const totalText = totalShips ? ` из ${totalShips}` : '';
+      status.textContent = `Запись ${idText}${totalText} (${model})`;
     }
-  } catch (error) {
-    console.error('Ошибка при загрузке деталей судна:', error);
+
+    // Рисуем все поля
+    for (const [dbKey, value] of Object.entries(selectedShip)) {
+      // ищем красивый лейбл — по обратной карте
+      const ruLabel = DB_TO_RU.get(dbKey) || dbKey; // фолбэк: техническое имя
+      placeRow(ruLabel, value);
+    }
+  } catch (err) {
+    console.error('Ошибка при загрузке деталей судна:', err);
   }
 }
 
-// Старт
-loadShipDetails();
+function initFormular() {
+  loadShipDetails();
+}
+
+// Если лэйаут уже подменил body — отрисуем сразу
+if (window.__layoutLoaded) {
+  initFormular();
+} else {
+  // Иначе дождёмся, когда базовый макет вставится
+  document.addEventListener('layout:ready', initFormular, { once: true });
+
+  // На всякий случай: если кто-то открыл страницу без base.html
+  document.addEventListener('DOMContentLoaded', () => {
+    if (window.__layoutLoaded) initFormular();
+  }, { once: true });
+}

@@ -39,9 +39,8 @@
   --top-h: auto;
 
   /* Таблица */
-  --th-bg: #0f172a;
-  --th-text:#ffffff;
-
+  --th-bg: var(--surface-2);
+  --th-text: var(--text);
   /* Overlay */
   --overlay: rgba(0,0,0,0.5);
 }
@@ -89,8 +88,8 @@ body[data-theme="light"]{
     --gap:12px;
     --sidebar-w:230px;
     --top-h:300px;
-    --th-bg: #0f172a;
-    --th-text:#ffffff;
+    --th-bg: var(--surface-2);
+    --th-text: var(--text);
     --overlay: rgba(0,0,0,0.5);
   }
   

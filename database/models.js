@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 
-let MarinFleet, User, Role, UserRole, UserLog, ChangedDate;
+let MarinFleet, User, Role, UserRole, UserLog, ChangedDate,RiverFleet;;
 
 
 function initModels(sequelize) {
@@ -144,7 +144,113 @@ function initModels(sequelize) {
     tableName: 'User',
     timestamps: false
 });
-
+// ========================= SeaFleet (Морские СУДА) =========================
+SeaFleet = sequelize.define('SeaFleet', {
+    // ================= Идентификация =================
+    reg_number:               { type: DataTypes.TEXT },                            // = Sea: reg_number
+    build_number:             { type: DataTypes.TEXT },                            // = Sea: build_number
+    imo_number:               { type: DataTypes.TEXT },                            // = Sea: imo_number
+    vessel_name:              { type: DataTypes.TEXT },                            // = Sea: vessel_name
+    former_name:              { type: DataTypes.TEXT },                            // = Sea: former_name
+    callsign:                 { type: DataTypes.TEXT },                            // = Sea: callsign
+    port_of_registry:         { type: DataTypes.TEXT },                            // = Sea: port_of_registry
+    flag:                     { type: DataTypes.TEXT },                            // = Sea: flag
+    class_symbol:             { type: DataTypes.TEXT },                            // = Sea: class_symbol
+    major_conversion:         { type: DataTypes.TEXT },                            // = Sea: major_conversion
+    main_type:                { type: DataTypes.TEXT },                            // = Sea: main_type
+  
+    // !!! В SeaFleet нет: mmsi, vessel_project, vessel_purpose, class_formula, source, data_source
+  
+    // ================= История и даты / постройка =================
+    keel_laying_date:         { type: DataTypes.TEXT },                            // = Sea: keel_laying_date
+    build_date:               { type: DataTypes.TEXT },                            // = Sea: build_date
+    build_country:            { type: DataTypes.TEXT },                            // = Sea: build_country
+    // build_location / factory_location / build_city в SeaFleet нет
+    build_number:             { type: DataTypes.TEXT },                            // уже выше (оставляем один раз)
+    major_part_date:          { type: DataTypes.TEXT },                            // = Sea: major_part_date
+    major_part:               { type: DataTypes.TEXT },                            // = Sea: major_part
+    // launch_date / completion_date / first_inspection_date в SeaFleet нет
+    // laid_down_date (Заложено) — в SeaFleet нет отдельного поля
+  
+    // ================= Вместимости =================
+    gross_tonnage:            { type: DataTypes.TEXT },                            // = Sea: gross_tonnage
+    net_tonnage:              { type: DataTypes.TEXT },                            // = Sea: net_tonnage
+    deadweight:               { type: DataTypes.TEXT },                            // = Sea: deadweight
+    displacement:             { type: DataTypes.TEXT },                            // = Sea: displacement
+    // lifting_capacity в SeaFleet нет
+  
+    // ================= Размерения =================
+    max_length:               { type: DataTypes.TEXT, field: 'max_length_theoretical' }, // ★ Marin: max_length → Sea: max_length_theoretical
+    overall_length:           { type: DataTypes.TEXT },                            // = Sea: overall_length
+    calc_length:              { type: DataTypes.TEXT },                            // = Sea: calc_length
+    overall_width:            { type: DataTypes.TEXT },                            // = Sea: overall_width
+    side_height:              { type: DataTypes.TEXT },                            // = Sea: side_height
+    draft:                    { type: DataTypes.TEXT },                            // = Sea: draft
+    // design_length / design_width / freeboard_height в SeaFleet нет
+  
+    // ================= Технические характеристики =================
+    speed:                    { type: DataTypes.TEXT },                            // = Sea: speed
+    propulsion_type:          { type: DataTypes.TEXT },                            // = Sea: propulsion_type
+    main_engines:             { type: DataTypes.TEXT },                            // = Sea: main_engines
+    // main_engine_model в SeaFleet нет
+  
+    // У MarinFleet: propulsor_type (тип движителя)
+    // В SeaFleet:  propulsor_count_type (кол-во и тип движителя, текст)
+    propulsor_type:           { type: DataTypes.TEXT, field: 'propulsor_count_type' }, // ★ Marin: propulsor_type → Sea: propulsor_count_type
+    // propulsion_count (кол-во движителей) в SeaFleet как отдельного поля нет
+  
+    // ================= Энергетика =================
+    // У MarinFleet: total_generator_power (суммарная мощность генераторов)
+    // В SeaFleet:  generators_count_power (кол-во и мощность генераторов)
+    total_generator_power:    { type: DataTypes.TEXT, field: 'generators_count_power' }, // ★ Marin: total_generator_power → Sea: generators_count_power
+    // total_electric_generators в SeaFleet нет
+    // У MarinFleet: total_ged_power (суммарная мощность ГЭД)
+    // В SeaFleet:  ged_count_power (кол-во и мощность ГЭД)
+    total_ged_power:          { type: DataTypes.TEXT, field: 'ged_count_power' },  // ★ Marin: total_ged_power → Sea: ged_count_power
+    // ged_count в SeaFleet нет как отдельного поля
+    main_boilers:             { type: DataTypes.TEXT },                            // = Sea: main_boilers
+  
+    // ================= Экипаж / пассажиры =================
+    crew_size:                { type: DataTypes.TEXT },                            // = Sea: crew_size
+    special_personnel:        { type: DataTypes.TEXT },                            // = Sea: special_personnel
+    bed_passenger_count:      { type: DataTypes.TEXT },                            // = Sea: bed_passenger_count
+    non_bed_passenger_count:  { type: DataTypes.TEXT },                            // = Sea: non_bed_passenger_count
+    // passenger_capacity в SeaFleet нет (если нужно, можно собирать суммой / текстом отдельно)
+  
+    // ================= Грузовые помещения =================
+    refrigerated_cargo_space: { type: DataTypes.TEXT, field: 'refrigerated_cargo_spaces' }, // ★ Marin: refrigerated_cargo_space → Sea: refrigerated_cargo_spaces
+    tanks:                    { type: DataTypes.TEXT, field: 'tanks_info' },               // ★ Marin: tanks → Sea: tanks_info
+    cargo_hold_count:         { type: DataTypes.TEXT, field: 'cargo_hold_count_volume' },  // ★ Marin: cargo_hold_count → Sea: cargo_hold_count_volume (совмещённое)
+    // cargo_hold_volume в SeaFleet как отдельного поля нет
+    container_type:           { type: DataTypes.TEXT, field: 'container_count_type' },     // ★ Marin: container_type → Sea: container_count_type
+    cargo_hatches:            { type: DataTypes.TEXT, field: 'cargo_hatches_info' },       // ★ Marin: cargo_hatches → Sea: cargo_hatches_info
+    booms:                    { type: DataTypes.TEXT },                            // = Sea: booms
+    cranes:                   { type: DataTypes.TEXT },                            // = Sea: cranes
+  
+    // ================= Материалы / корпус =================
+    hull_material:            { type: DataTypes.TEXT },                            // = Sea: hull_material
+    // superstructure_material в SeaFleet нет
+  
+    // ================= Прочее =================
+    fuel_reserves:            { type: DataTypes.TEXT },                            // = Sea: fuel_reserves
+    fuel_types:               { type: DataTypes.TEXT },                            // = Sea: fuel_types
+    ballast:                  { type: DataTypes.TEXT },                            // = Sea: ballast
+    heaters:                  { type: DataTypes.TEXT },                            // = Sea: heaters
+    supply_characteristics:   { type: DataTypes.TEXT },                            // = Sea: supply_characteristics
+    anchor_chain_category:    { type: DataTypes.TEXT },                            // = Sea: anchor_chain_category
+    anchor_chain_caliber:     { type: DataTypes.TEXT },                            // = Sea: anchor_chain_caliber
+    radio_navigation_equipment:{ type: DataTypes.TEXT },                           // = Sea: radio_navigation_equipment
+    working_temperature:      { type: DataTypes.TEXT },                            // = Sea: working_temperature
+    refrigerants:             { type: DataTypes.TEXT },                            // = Sea: refrigerants
+    deck_count:               { type: DataTypes.TEXT },                            // = Sea: deck_count
+    bulkheads_total_count:    { type: DataTypes.TEXT, field: 'bulkheads_count' },  // ★ Marin: bulkheads_total_count → Sea: bulkheads_count
+  
+    // ================= Sea-специфика (оставляем как EXTRA, т.к. прямых аналогов в Marin нет) =================
+    blades_count:             { type: DataTypes.TEXT },                            // EXTRA: Кол-во лопастей (в Marin propeller_count — другое)
+  }, {
+    tableName: 'SeaFleet',
+    timestamps: false
+  });
  Role = sequelize.define('Role', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     name: { type: DataTypes.TEXT, allowNull: false },
@@ -203,7 +309,7 @@ module.exports.Role = Role;
 module.exports.UserRole = UserRole;
 module.exports.UserLog = UserLog;
 module.exports.ChangedDate = ChangedDate;
-
+module.exports.SeaFleet = SeaFleet;
 return module.exports;
 
 }
@@ -214,5 +320,6 @@ Object.defineProperties(module.exports, {
     UserRole:   { enumerable: true, get: () => UserRole },
     UserLog:    { enumerable: true, get: () => UserLog },
     ChangedDate:{ enumerable: true, get: () => ChangedDate },
+    SeaFleet: { enumerable: true, get: () => SeaFleet },
     initModels: { value: initModels }
   });
