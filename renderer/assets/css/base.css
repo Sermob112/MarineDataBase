@@ -456,3 +456,4 @@ th { cursor: pointer; user-select: none; }
   background: var(--primary);
   color: var(--primary-contrast);
 }
+[hidden]{ display:none !important; }

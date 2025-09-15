@@ -20,6 +20,11 @@ class ShipBaseBack {
     ipcMain.handle('get-seafleet-by-type',  this.getSeaTypePage.bind(this));
     ipcMain.handle('get-movement-types',    this.getMovementTypes.bind(this));
     ipcMain.handle('get-movement-by-type',  this.getMovementTypePage.bind(this));
+    ipcMain.handle('get-homeports',                 this.getHomeports.bind(this));
+    ipcMain.handle('get-vessels-by-homeport',       this.getVesselsByHomeport.bind(this));
+    ipcMain.handle('get-builder-countries',         this.getBuilderCountries.bind(this));
+    ipcMain.handle('get-vessels-by-builder-country',this.getVesselsByBuilderCountry.bind(this));
+
 
     ipcMain.handle('import-vessel-data', async (_event, filePath) => {
       const { importVesselDataNew } = require('./CsvReaderShipDataByArtem');
@@ -562,7 +567,147 @@ async  getMovementTypePage(_event, { type, offset = 0, limit = 200 }) {
       console.error('Ошибка при загрузке деталей судна:', error);
     });
 }
+// ===================== ЗАВОД: Порт приписки / Страна-строитель =====================
 
+// 2.1 Список портов приписки с количеством (на базе SeaFleet)
+async getHomeports() {
+  try {
+    const { SeaFleet } = require('../database/models');
+    const { Op, fn, col } = require('sequelize');
+
+    const rows = await SeaFleet.findAll({
+      attributes: [
+        [col('port_of_registry'), 'value'],
+        [fn('COUNT', col('id')), 'count'],
+      ],
+      where: {
+        port_of_registry: { [Op.not]: null, [Op.ne]: '' },
+      },
+      group: [col('port_of_registry')],
+      order: [[col('port_of_registry'), 'ASC']],
+      raw: true,
+    });
+
+    // Склейка дублей «вокруг пробелов/кейса» (как в getMovementTypes)
+    const norm = s => String(s || '').replace(/\s+/g, ' ').trim();
+    const map = new Map(); // key = lower(norm), value = { value: показ, count }
+    for (const r of rows) {
+      const t = norm(r.value);
+      if (!t) continue;
+      const key = t.toLowerCase();
+      const prev = map.get(key);
+      map.set(key, { value: prev?.value || t, count: (prev?.count || 0) + (+r.count || 0) });
+    }
+    const out = Array.from(map.values()).sort((a,b)=> a.value.localeCompare(b.value,'ru'));
+    return out; // [{ value, count }]
+  } catch (err) {
+    console.error('getHomeports error:', err);
+    throw err;
+  }
+}
+
+// 2.2 Постраничная выдача судов по выбранному порту приписки (SeaFleet)
+async getVesselsByHomeport(_event, { homeport, offset = 0, limit = 200 }) {
+  try {
+    const { SeaFleet } = require('../database/models');
+    const { Op, fn, col, where } = require('sequelize');
+
+    const selected = String(homeport || '').replace(/\s+/g, ' ').trim();
+    if (!selected) return { items: [], nextOffset: offset };
+
+    const rows = await SeaFleet.findAll({
+      attributes: [
+        'id',
+        [col('imo_number'),  'imo'],
+        [col('vessel_name'), 'name'],
+        [col('reg_number'),  'reg'],
+      ],
+      where: where(fn('TRIM', col('port_of_registry')), { [Op.iLike]: selected }),
+      offset,
+      limit,
+      order: [['id','ASC']],
+      raw: true,
+    });
+
+    return {
+      items: rows.map(r => ({ id: r.id, imo: r.imo || '—', name: r.name || '—', reg: r.reg || '—' })),
+      nextOffset: offset + rows.length,
+    };
+  } catch (err) {
+    console.error('getVesselsByHomeport error:', err);
+    throw err;
+  }
+}
+
+// 2.3 Список стран-строителей с количеством (SeaFleet)
+async getBuilderCountries() {
+  try {
+    const { SeaFleet } = require('../database/models');
+    const { Op, fn, col } = require('sequelize');
+
+    const rows = await SeaFleet.findAll({
+      attributes: [
+        [col('build_country'), 'value'],
+        [fn('COUNT', col('id')), 'count'],
+      ],
+      where: {
+        build_country: { [Op.not]: null, [Op.ne]: '' },
+      },
+      group: [col('build_country')],
+      order: [[col('build_country'), 'ASC']],
+      raw: true,
+    });
+
+    const norm = s => String(s || '').replace(/\s+/g, ' ').trim();
+    const map = new Map();
+    for (const r of rows) {
+      const t = norm(r.value);
+      if (!t) continue;
+      const key = t.toLowerCase();
+      const prev = map.get(key);
+      map.set(key, { value: prev?.value || t, count: (prev?.count || 0) + (+r.count || 0) });
+    }
+    const out = Array.from(map.values()).sort((a,b)=> a.value.localeCompare(b.value,'ru'));
+    return out; // [{ value, count }]
+  } catch (err) {
+    console.error('getBuilderCountries error:', err);
+    throw err;
+  }
+}
+
+// 2.4 Постраничная выдача судов по выбранной стране-строителю (SeaFleet)
+async getVesselsByBuilderCountry(_event, { country, offset = 0, limit = 200 }) {
+  try {
+    const { SeaFleet } = require('../database/models');
+    const { Op, fn, col, where } = require('sequelize');
+
+    const selected = String(country || '').replace(/\s+/g, ' ').trim();
+    if (!selected) return { items: [], nextOffset: offset };
+
+    const rows = await SeaFleet.findAll({
+      attributes: [
+        'id',
+        [col('imo_number'),  'imo'],
+        [col('vessel_name'), 'name'],
+        [col('reg_number'),  'reg'],
+      ],
+      where: where(fn('TRIM', col('build_country')), { [Op.iLike]: selected }),
+      offset,
+      limit,
+      order: [['id','ASC']],
+      raw: true,
+    });
+
+    return {
+      items: rows.map(r => ({ id: r.id, imo: r.imo || '—', name: r.name || '—', reg: r.reg || '—' })),
+      nextOffset: offset + rows.length,
+    };
+  } catch (err) {
+    console.error('getVesselsByBuilderCountry error:', err);
+    throw err;
+  }
+}
+// ===================== /ЗАВОД =====================
 }
 
 module.exports = ShipBaseBack;

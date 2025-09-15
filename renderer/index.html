@@ -112,10 +112,38 @@
     </section>
 
     <section class="tab-content" id="tab-factory" role="tabpanel" hidden>
-      <div id="factory-container">
-        <!-- Заполним позже. Заглушка: -->
-        <p>Здесь будет раздел «ЗАВОД» (список верфей, города постройки и т.п.).</p>
-        <table id="factory-table"></table>
+      <div id="factory-container" class="filters">
+        
+        <!-- 1) Порт приписки -->
+        <details class="filter-group" id="factory-homeport-group" open>
+          <summary>Порт приписки</summary>
+          <div class="filter-nested">
+            <details open>
+              <summary>Порт</summary>
+              <ul id="homeport-list" class="disclosure-list" role="listbox"></ul>
+            </details>
+            <details>
+              <summary>Суда</summary>
+              <ul id="homeport-vessels-list" class="disclosure-list" role="listbox"></ul>
+            </details>
+          </div>
+        </details>
+    
+        <!-- 2) Страна строитель -->
+        <details class="filter-group" id="factory-builder-country-group">
+          <summary>Страна строитель</summary>
+          <div class="filter-nested">
+            <details open>
+              <summary>Страна</summary>
+              <ul id="builder-country-list" class="disclosure-list" role="listbox"></ul>
+            </details>
+            <details>
+              <summary>Суда</summary>
+              <ul id="builder-country-vessels-list" class="disclosure-list" role="listbox"></ul>
+            </details>
+          </div>
+        </details>
+    
       </div>
     </section>
 
