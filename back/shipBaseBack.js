@@ -8,7 +8,9 @@ class ShipBaseBack {
   }
 
   setupRoutes() {
-    ipcMain.handle('search-ship',           this.searchShips.bind(this));
+    ipcMain.removeHandler('search-ship');
+    ipcMain.removeHandler('search-ship-suggest');
+    ipcMain.handle('search-ship',           this.searchShip.bind(this));
     ipcMain.handle('get-ship-data',         this.getShipData.bind(this));
     ipcMain.handle('add-ship',              this.addShip.bind(this));
     ipcMain.handle('delete-ship',           this.deleteShip.bind(this));
@@ -24,6 +26,8 @@ class ShipBaseBack {
     ipcMain.handle('get-vessels-by-homeport',       this.getVesselsByHomeport.bind(this));
     ipcMain.handle('get-builder-countries',         this.getBuilderCountries.bind(this));
     ipcMain.handle('get-vessels-by-builder-country',this.getVesselsByBuilderCountry.bind(this));
+    ipcMain.handle('search-ship-suggest',  this.searchShipSuggest.bind(this));
+
 
 
     ipcMain.handle('import-vessel-data', async (_event, filePath) => {
@@ -133,45 +137,6 @@ class ShipBaseBack {
     if (!id) throw new Error('Invalid ship id');
     this.currentShip = { id, model };
     return { ok: true };
-  }
-
-  async searchShips(
-    _event,
-    { query, offset, batchSize, sortField = 'id', ascending = true }
-  ) {
-    try {
-      const totalRecords = await models.MarinFleet.count();
-
-      const whereCondition = query
-        ? {
-            [Op.or]: [
-              { reg_number: { [Op.like]: `%${query}%` } },
-              { main_type: { [Op.like]: `%${query}%` } },
-              { imo_number: { [Op.like]: `%${query}%` } },
-              { refit_factory: { [Op.like]: `%${query}%` } },
-              { vessel_project: { [Op.like]: `%${query}%` } },
-            ],
-          }
-        : {};
-
-      const filteredCount = await models.MarinFleet.count({ where: whereCondition });
-
-      const ships = await models.MarinFleet.findAll({
-        where: whereCondition,
-        offset,
-        limit: batchSize,
-        order: [[sortField, ascending ? 'ASC' : 'DESC']],
-      });
-
-      return {
-        totalRecords,
-        filteredCount,
-        ships: ships.map(ship => ship.toJSON()),
-      };
-    } catch (error) {
-      console.error('Ошибка при поиске судов:', error);
-      throw error;
-    }
   }
 
 // -----------------ТАБЛИЦЫ ПО Путевые условия----------------------------
@@ -708,6 +673,159 @@ async getVesselsByBuilderCountry(_event, { country, offset = 0, limit = 200 }) {
   }
 }
 // ===================== /ЗАВОД =====================
+// ===== ЕДИНЫЙ ПОИСК ПО SeaFleet + MarinFleet (reg_number, imo_number, vessel_name) =====
+
+async searchShip(_evt, { query, offset=0, batchSize=50, sortField='id', ascending=true }) {
+  const { SeaFleet, MarinFleet } = require('../database/models');
+  const { Op, fn, col, where, literal } = require('sequelize');
+
+  const q = String(query || '').trim();
+  if (!q) return { ships: [], totalRecords: 0, filteredCount: 0 };
+
+  // Базовый where по трём полям
+  const makeWhere = (model) => ({
+    [Op.or]: [
+      where(fn('TRIM', col(`${model}.reg_number`   )), { [Op.iLike]: `%${q}%` }),
+      where(fn('TRIM', col(`${model}.imo_number`   )), { [Op.iLike]: `%${q}%` }),
+      where(fn('TRIM', col(`${model}.vessel_name`  )), { [Op.iLike]: `%${q}%` }),
+    ]
+  });
+
+  // TOTAL по двум таблицам (для info)
+  const totalSea   = await SeaFleet.count();
+  const totalMarin = await MarinFleet.count();
+  const totalRecords = totalSea + totalMarin;
+
+  // FILTERED counts
+  const filteredSea   = await SeaFleet.count({ where: makeWhere('SeaFleet') });
+  const filteredMarin = await MarinFleet.count({ where: makeWhere('MarinFleet') });
+  const filteredCount = filteredSea + filteredMarin;
+
+  // Данные страницей по каждой модели
+  const orderDir = ascending ? 'ASC' : 'DESC';
+  // Для сортировки: поддержим безопасные поля из твоей таблицы
+  const safeSort = new Set(['id','imo_number','reg_number','vessel_name','main_type','refit_factory','vessel_project']);
+  const sortCol = safeSort.has(sortField) ? sortField : 'id';
+
+  // Берём с запасом и потом склеиваем и режем по offset/limit
+  const takeEach = offset + batchSize;
+
+  const seaRows = await SeaFleet.findAll({
+    attributes: [
+      ['id','id'],
+      ['main_type','main_type'],
+      ['imo_number','imo_number'],
+      ['reg_number','reg_number'],
+      ['refit_factory','refit_factory'],
+      ['vessel_name','vessel_name'],
+      ['vessel_project','vessel_project'],
+    ],
+    where: makeWhere('SeaFleet'),
+    order: [[sortCol, orderDir], ['id','ASC']],
+    limit: takeEach,
+    raw: true,
+  });
+
+  const marinRows = await MarinFleet.findAll({
+    attributes: [
+      ['id','id'],
+      [literal('NULL'), 'main_type'],
+      ['imo_number','imo_number'],
+      ['reg_number','reg_number'],
+      [literal('NULL'), 'refit_factory'],
+      ['vessel_name','vessel_name'],
+      [literal('NULL'), 'vessel_project'],
+    ],
+    where: makeWhere('MarinFleet'),
+    order: [[sortCol, orderDir], ['id','ASC']],
+    limit: takeEach,
+    raw: true,
+  });
+
+  // Склейка и окончательное пагинирование
+  const merged = [
+    ...seaRows.map(r => ({ ...r, model: 'SeaFleet' })),
+    ...marinRows.map(r => ({ ...r, model: 'MarinFleet' })),
+  ];
+
+  // Единая сортировка после merge, чтобы строго соблюдать field + dir между моделями
+  merged.sort((a,b)=>{
+    const av = (a[sortCol] ?? '').toString();
+    const bv = (b[sortCol] ?? '').toString();
+    const cmp = av.localeCompare(bv, 'ru', { numeric: true, sensitivity: 'base' });
+    if (cmp !== 0) return ascending ? cmp : -cmp;
+    return a.id - b.id;
+  });
+
+  const page = merged.slice(offset, offset + batchSize);
+
+  const ships = page.map(r => ({
+    id: r.id,
+    main_type: r.main_type || '—',
+    imo_number: r.imo_number || '—',
+    reg_number: r.reg_number || '—',
+    refit_factory: r.refit_factory || '—',
+    vessel_project: r.vessel_project || '—',
+    model: r.model,
+  }));
+
+  return { ships, totalRecords, filteredCount };
+}
+
+// ===== ПОДСКАЗКИ ПО ТРЁМ ПОЛЯМ (начиная с 2-х символов) =====
+async searchShipSuggest(_evt, { q, limit = 12 }) {
+  const { SeaFleet, MarinFleet } = require('../database/models');
+  const { Op, fn, col, where } = require('sequelize');
+
+  const s = String(q || '').trim();
+  if (s.length < 2) return [];
+
+  const like = `%${s}%`;
+  const attrs = (model) => ([
+    ['id','id'],
+    ['reg_number','reg_number'],
+    ['imo_number','imo_number'],
+    ['vessel_name','vessel_name'],
+  ]);
+  const whereOR = (model) => ({
+    [Op.or]: [
+      where(fn('TRIM', col(`${model}.reg_number`)),  { [Op.iLike]: like }),
+      where(fn('TRIM', col(`${model}.imo_number`)),  { [Op.iLike]: like }),
+      where(fn('TRIM', col(`${model}.vessel_name`)), { [Op.iLike]: like }),
+    ]
+  });
+
+  const [sea, marin] = await Promise.all([
+    SeaFleet.findAll({ attributes: attrs('SeaFleet'), where: whereOR('SeaFleet'), limit, raw: true }),
+    MarinFleet.findAll({ attributes: attrs('MarinFleet'), where: whereOR('MarinFleet'), limit, raw: true }),
+  ]);
+
+  // склеиваем и уникализируем по комбинации полей
+  const merged = [
+    ...sea.map(r => ({ ...r, model: 'SeaFleet' })),
+    ...marin.map(r => ({ ...r, model: 'MarinFleet' })),
+  ];
+
+  const seen = new Set();
+  const out = [];
+  for (const it of merged) {
+    const key = `${it.model}|${it.reg_number || ''}|${it.imo_number || ''}|${it.vessel_name || ''}`.toLowerCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      out.push({
+        id: it.id,
+        model: it.model,
+        reg_number: it.reg_number?.trim() || '—',
+        imo_number: it.imo_number?.trim() || '—',
+        vessel_name: it.vessel_name?.trim() || '—',
+      });
+      if (out.length >= limit) break;
+    }
+  }
+  return out;
+}
+
+
 }
 
 module.exports = ShipBaseBack;

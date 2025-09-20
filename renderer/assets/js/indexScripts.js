@@ -3,14 +3,45 @@
   if (window.__indexPageInit) return;
   window.__indexPageInit = true;
 
-  // ждём, пока Baselayout соберёт каркас
-  if (window.__layoutLoaded) init();
-  else document.addEventListener('layout:ready', init, { once: true });
-
+  // маленький селектор-помощник
   function $(sel) { return document.querySelector(sel); }
 
+  // ждём каркас из Baselayout
+  function onLayoutReady() {
+    init().catch(err => console.error('init failed:', err));
+  }
+  if (window.__layoutLoaded) onLayoutReady();
+  else document.addEventListener('layout:ready', onLayoutReady, { once: true });
+  async function openFormularById(id, model = 'MarinFleet') {
+    if (!id) return;
+    await ipcRenderer.invoke('load-ship-details', { id, model });
+    window.location.href = 'shipFormular.html';
+  }
+  // -------------------------------------------------------------------------
+  // init
+  // -------------------------------------------------------------------------
   async function init() {
     const { ipcRenderer } = require('electron');
+
+    // === Глобальная строка поиска (смонтировать виджет подсказок) ===========
+    if (typeof window.mountSearchWidget === 'function') {
+      window.mountSearchWidget({
+        input:      '#search-input',
+        suggest:    '#search-suggest',
+        resultInfo: '#result-info',
+        minChars:   2,
+        debounceMs: 200,
+        ipcSuggest: 'search-ship-suggest',
+        onPick: async (row) => {
+          await openFormularById(row.id, row.model);
+        },
+        // сюда можно добавить переключение нужной вкладки и загрузку
+        triggerSearch: async (q) => {
+          // no-op: при нажатии Enter можно, например, активировать вкладку "Флот"
+          // и выполнить подзагрузку. Оставил место для логики.
+        },
+      });
+    }
 
     // Универсальный переход в формуляр
     async function openFormularByLi(li) {
@@ -50,18 +81,18 @@
         const c1 = document.createElement('span'); c1.className = 'disclosure-item__imo';  c1.textContent = it.imo  || '—';
         const c2 = document.createElement('span'); c2.className = 'disclosure-item__name'; c2.textContent = it.name || '—';
         const c3 = document.createElement('span'); c3.className = 'disclosure-item__reg';  c3.textContent = it.reg  || '—';
-        li.append(c1,c2,c3);
+        li.append(c1, c2, c3);
         frag.appendChild(li);
       });
       ul.appendChild(frag);
     }
 
-    // ============= ПУТЕВЫЕ УСЛОВИЯ (ленивая подгрузка по ведрам) =============
+    // ================= ПУТЕВЫЕ УСЛОВИЯ (ленивая подгрузка) ==================
     const BUCKETS = {
       sea:      { ulSel: '#route-sea-list',      label: 'Морские',   model: 'SeaFleet'   },
       river:    { ulSel: '#route-river-list',    label: 'Речные',    model: 'MarinFleet' },
       riverSea: { ulSel: '#route-riversea-list', label: 'Река-море', model: 'MarinFleet' },
-      other:    { ulSel: '#route-other-list',    label: 'Прочее',    model: 'MarinFleet' }
+      other:    { ulSel: '#route-other-list',    label: 'Прочее',    model: 'MarinFleet' },
     };
 
     const routeState = {}; // bucket -> { ul, offset, busy, done }
@@ -95,12 +126,15 @@
         });
       }
     }
+
+    // автозагрузка для уже открытых секций
     for (const [bucket, st] of Object.entries(routeState)) {
       const details = st.ul.closest('details');
       if (details && details.open && st.offset === 0 && !st.busy) {
-        loadRoutePage(bucket); // автозагрузка для уже открытых секций
+        loadRoutePage(bucket);
       }
     }
+
     // счётчики в summary
     try {
       const facets = await ipcRenderer.invoke('get-index-facets');
@@ -129,7 +163,7 @@
         }
 
         const { items, nextOffset } = await ipcRenderer.invoke('get-route-page', {
-          bucket, offset: st.offset, limit: 200
+          bucket, offset: st.offset, limit: 200,
         });
 
         if (!items || !items.length) {
@@ -154,13 +188,12 @@
       }
     }
 
-    // ============= ГРУЗОВАЯ БАЗА (Тип main_type из SeaFleet) =============
-    (function initCargoBase(){
+    // ================= ГРУЗОВАЯ БАЗА (main_type из SeaFleet) =================
+    (function initCargoBase() {
       const typeUL = $('#cargo-type-list');
       const catUL  = $('#cargo-category-list'); // правая таблица
       if (!typeUL || !catUL) return;
 
-      // шапка справа
       injectHeader(catUL, 'cargo');
 
       let currentType = null;
@@ -222,13 +255,13 @@
           const c3 = document.createElement('span'); c3.textContent = String(t.count ?? '');
           c3.style.justifySelf = 'end';
 
-          li.append(c1,c2,c3);
+          li.append(c1, c2, c3);
           frag.appendChild(li);
         });
         typeUL.appendChild(frag);
       }
 
-      function resetCat(){
+      function resetCat() {
         cargoState.offset = 0;
         cargoState.busy = false;
         cargoState.done = false;
@@ -236,12 +269,12 @@
         catUL.innerHTML = '<li class="disclosure-item"><span>Загрузка…</span><span></span><span></span></li>';
       }
 
-      async function loadCatPage(){
+      async function loadCatPage() {
         if (!currentType || cargoState.busy || cargoState.done) return;
         cargoState.busy = true;
         try {
           const { items, nextOffset } = await ipcRenderer.invoke('get-seafleet-by-type', {
-            type: currentType, offset: cargoState.offset, limit: 200
+            type: currentType, offset: cargoState.offset, limit: 200,
           });
           if (!items || !items.length) {
             cargoState.done = true;
@@ -265,8 +298,8 @@
       }
     })();
 
-    // ============= ТИП ДВИЖЕНИЯ (propulsion_type из SeaFleet) =============
-    (function initMovement(){
+    // ================= ДВИЖЕНИЕ (propulsion_type из SeaFleet) ================
+    (function initMovement() {
       const typeUL  = $('#movement-type-list');     // слева — уникальные propulsion_type
       const tableUL = $('#movement-vessels-list');  // справа — суда выбранного типа
       if (!typeUL || !tableUL) return;
@@ -314,7 +347,7 @@
         if (li) openFormularByLi(li);
       });
 
-      function renderTypeList(types){
+      function renderTypeList(types) {
         typeUL.innerHTML = '';
         if (!types || !types.length) {
           typeUL.innerHTML = '<li class="disclosure-item"><span></span><span>(нет данных)</span><span></span></li>';
@@ -331,13 +364,13 @@
           const c3 = document.createElement('span'); c3.textContent = String(t.count ?? '');
           c3.style.justifySelf = 'end';
 
-          li.append(c1,c2,c3);
+          li.append(c1, c2, c3);
           frag.appendChild(li);
         }
         typeUL.appendChild(frag);
       }
 
-      function resetTable(){
+      function resetTable() {
         mvState.offset = 0;
         mvState.busy = false;
         mvState.done = false;
@@ -345,12 +378,12 @@
         tableUL.innerHTML = '<li class="disclosure-item"><span>Загрузка…</span><span></span><span></span></li>';
       }
 
-      async function loadPage(){
+      async function loadPage() {
         if (!currentType || mvState.busy || mvState.done) return;
         mvState.busy = true;
         try {
           const { items, nextOffset } = await ipcRenderer.invoke('get-movement-by-type', {
-            type: currentType, offset: mvState.offset, limit: 200
+            type: currentType, offset: mvState.offset, limit: 200,
           });
           if (!items || !items.length) {
             mvState.done = true;
@@ -374,289 +407,285 @@
       }
     })();
 
-    // ============= ЗАВОД: Порт приписки + Страна строитель =============
-(function initFactory(){
-  const { ipcRenderer } = require('electron');
+    // ================== ФАСЕТЫ: Порт приписки / Страна строителя ============
+    (function initFactory() {
+      // Общий рендерер левой колонки (значение + count)
+      function renderFacetList(ul, items, dataKey) {
+        ul.innerHTML = '';
+        if (!items || !items.length) {
+          ul.innerHTML = '<li class="disclosure-item"><span></span><span>(нет данных)</span><span></span></li>';
+          return;
+        }
+        const frag = document.createDocumentFragment();
+        for (const t of items) {
+          const li = document.createElement('li');
+          li.className = 'disclosure-item';
+          li.dataset[dataKey] = t.value; // t.value — строка значения фасета
 
-  // Общий рендерер левой колонки (значение + count)
-  function renderFacetList(ul, items, dataKey){
-    ul.innerHTML = '';
-    if (!items || !items.length){
-      ul.innerHTML = '<li class="disclosure-item"><span></span><span>(нет данных)</span><span></span></li>';
-      return;
-    }
-    const frag = document.createDocumentFragment();
-    for (const t of items){
-      const li = document.createElement('li');
-      li.className = 'disclosure-item';
-      li.dataset[dataKey] = t.value; // t.value — строка значения фасета
+          const c1 = document.createElement('span');
+          const c2 = document.createElement('span'); c2.textContent = t.value || '—';
+          const c3 = document.createElement('span'); c3.textContent = String(t.count ?? '');
+          c3.style.justifySelf = 'end';
 
-      const c1 = document.createElement('span');
-      const c2 = document.createElement('span'); c2.textContent = t.value || '—';
-      const c3 = document.createElement('span'); c3.textContent = String(t.count ?? '');
-      c3.style.justifySelf = 'end';
-
-      li.append(c1,c2,c3);
-      frag.appendChild(li);
-    }
-    ul.appendChild(frag);
-  }
-
-  // ---------- 1) ПОРТ ПРИПИСКИ ----------
-  (function initHomeport(){
-    const typeUL  = document.querySelector('#homeport-list');           // слева — список портов
-    const tableUL = document.querySelector('#homeport-vessels-list');   // справа — суда выбранного порта
-    if (!typeUL || !tableUL) return;
-
-    injectHeader(tableUL, 'homeport'); // шапка "IMO | Название | Рег. №"
-
-    let current = null;
-    const st = { offset: 0, busy: false, done: false };
-
-    // Загрузка уникальных портов
-    (async () => {
-      try {
-        // Ожидаемый ответ: [{ value: 'Saint Petersburg', count: 123 }, ...]
-        const ports = await ipcRenderer.invoke('get-homeports');
-        renderFacetList(typeUL, ports, 'value');
-      } catch (e) {
-        console.error('get-homeports failed:', e);
-        renderFacetList(typeUL, [], 'value');
+          li.append(c1, c2, c3);
+          frag.appendChild(li);
+        }
+        ul.appendChild(frag);
       }
-    })();
 
-    // Выбор порта
-    typeUL.addEventListener('click', (e) => {
-      const li = e.target.closest('.disclosure-item');
-      if (!li) return;
+      // ---- 1) ПОРТ ПРИПИСКИ
+      (function initHomeport() {
+        const typeUL  = document.querySelector('#homeport-list');           // слева — список портов
+        const tableUL = document.querySelector('#homeport-vessels-list');   // справа — суда выбранного порта
+        if (!typeUL || !tableUL) return;
 
-      typeUL.querySelectorAll('.disclosure-item.is-selected').forEach(x => x.classList.remove('is-selected'));
-      li.classList.add('is-selected');
+        injectHeader(tableUL, 'homeport'); // шапка "IMO | Название | Рег. №"
 
-      current = li.dataset.value || li.textContent.trim();
-      resetTable();
-      loadPage();
+        let current = null;
+        const st = { offset: 0, busy: false, done: false };
 
-      const det = tableUL.closest('details');
-      if (det && !det.open) det.open = true;
-    });
+        // Загрузка уникальных портов
+        (async () => {
+          try {
+            // Ожидаемый ответ: [{ value: 'Saint Petersburg', count: 123 }, ...]
+            const ports = await ipcRenderer.invoke('get-homeports');
+            renderFacetList(typeUL, ports, 'value');
+          } catch (e) {
+            console.error('get-homeports failed:', e);
+            renderFacetList(typeUL, [], 'value');
+          }
+        })();
 
-    // Догрузка
-    tableUL.addEventListener('scroll', () => {
-      if (tableUL.scrollTop + tableUL.clientHeight >= tableUL.scrollHeight - 20) {
-        loadPage();
-      }
-    }, { passive: true });
+        // Выбор порта
+        typeUL.addEventListener('click', (e) => {
+          const li = e.target.closest('.disclosure-item');
+          if (!li) return;
 
-    // Клик по строке -> формуляр
-    tableUL.addEventListener('click', (e) => {
-      const li = e.target.closest('.disclosure-item');
-      if (li) openFormularByLi(li);
-    });
+          typeUL.querySelectorAll('.disclosure-item.is-selected').forEach(x => x.classList.remove('is-selected'));
+          li.classList.add('is-selected');
 
-    function resetTable(){
-      st.offset = 0; st.busy = false; st.done = false;
-      tableUL.dataset.loading = '1';
-      tableUL.innerHTML = '<li class="disclosure-item"><span>Загрузка…</span><span></span><span></span></li>';
-    }
+          current = li.dataset.value || li.textContent.trim();
+          resetTable();
+          loadPage();
 
-    async function loadPage(){
-      if (!current || st.busy || st.done) return;
-      st.busy = true;
-      try {
-        // Ожидаемый ответ: { items: [{id, imo, name, reg}], nextOffset }
-        const { items, nextOffset } = await ipcRenderer.invoke('get-vessels-by-homeport', {
-          homeport: current, offset: st.offset, limit: 200
+          const det = tableUL.closest('details');
+          if (det && !det.open) det.open = true;
         });
 
-        if (!items || !items.length){
-          st.done = true;
-          if (st.offset === 0){
-            tableUL.innerHTML = '<li class="disclosure-item"><span>(нет данных)</span><span></span><span></span></li>';
+        // Догрузка
+        tableUL.addEventListener('scroll', () => {
+          if (tableUL.scrollTop + tableUL.clientHeight >= tableUL.scrollHeight - 20) {
+            loadPage();
           }
-        } else {
-          if (tableUL.dataset.loading){ tableUL.dataset.loading = ''; tableUL.innerHTML = ''; }
-          // Если данные только из SeaFleet — оставьте 'SeaFleet'; иначе можно вернуть model в каждом item и доработать appendItems
-          appendItems(tableUL, items, 'SeaFleet');
-          st.offset = nextOffset;
-        }
-      } catch (e) {
-        console.error('get-vessels-by-homeport failed:', e);
-        st.done = true;
-        if (st.offset === 0){
-          tableUL.innerHTML = '<li class="disclosure-item"><span>Ошибка загрузки</span><span></span><span></span></li>';
-        }
-      } finally {
-        st.busy = false;
-      }
-    }
-  })();
+        }, { passive: true });
 
-  // ---------- 2) СТРАНА СТРОИТЕЛЬ ----------
-  (function initBuilderCountry(){
-    const typeUL  = document.querySelector('#builder-country-list');          // слева — список стран
-    const tableUL = document.querySelector('#builder-country-vessels-list');  // справа — суда выбранной страны
-    if (!typeUL || !tableUL) return;
-
-    injectHeader(tableUL, 'builder-country'); // шапка "IMO | Название | Рег. №"
-
-    let current = null;
-    const st = { offset: 0, busy: false, done: false };
-
-    // Загрузка уникальных стран строителей
-    (async () => {
-      try {
-        // Ожидаемый ответ: [{ value: 'Russia', count: 456 }, ...]
-        const countries = await ipcRenderer.invoke('get-builder-countries');
-        renderFacetList(typeUL, countries, 'value');
-      } catch (e) {
-        console.error('get-builder-countries failed:', e);
-        renderFacetList(typeUL, [], 'value');
-      }
-    })();
-
-    // Выбор страны
-    typeUL.addEventListener('click', (e) => {
-      const li = e.target.closest('.disclosure-item');
-      if (!li) return;
-
-      typeUL.querySelectorAll('.disclosure-item.is-selected').forEach(x => x.classList.remove('is-selected'));
-      li.classList.add('is-selected');
-
-      current = li.dataset.value || li.textContent.trim();
-      resetTable();
-      loadPage();
-
-      const det = tableUL.closest('details');
-      if (det && !det.open) det.open = true;
-    });
-
-    // Догрузка
-    tableUL.addEventListener('scroll', () => {
-      if (tableUL.scrollTop + tableUL.clientHeight >= tableUL.scrollHeight - 20) {
-        loadPage();
-      }
-    }, { passive: true });
-
-    // Клик по строке -> формуляр
-    tableUL.addEventListener('click', (e) => {
-      const li = e.target.closest('.disclosure-item');
-      if (li) openFormularByLi(li);
-    });
-
-    function resetTable(){
-      st.offset = 0; st.busy = false; st.done = false;
-      tableUL.dataset.loading = '1';
-      tableUL.innerHTML = '<li class="disclosure-item"><span>Загрузка…</span><span></span><span></span></li>';
-    }
-
-    async function loadPage(){
-      if (!current || st.busy || st.done) return;
-      st.busy = true;
-      try {
-        // Ожидаемый ответ: { items: [{id, imo, name, reg}], nextOffset }
-        const { items, nextOffset } = await ipcRenderer.invoke('get-vessels-by-builder-country', {
-          country: current, offset: st.offset, limit: 200
+        // Клик по строке -> формуляр
+        tableUL.addEventListener('click', (e) => {
+          const li = e.target.closest('.disclosure-item');
+          if (li) openFormularByLi(li);
         });
 
-        if (!items || !items.length){
-          st.done = true;
-          if (st.offset === 0){
-            tableUL.innerHTML = '<li class="disclosure-item"><span>(нет данных)</span><span></span><span></span></li>';
+        function resetTable() {
+          st.offset = 0; st.busy = false; st.done = false;
+          tableUL.dataset.loading = '1';
+          tableUL.innerHTML = '<li class="disclosure-item"><span>Загрузка…</span><span></span><span></span></li>';
+        }
+
+        async function loadPage() {
+          if (!current || st.busy || st.done) return;
+          st.busy = true;
+          try {
+            // Ожидаемый ответ: { items: [{id, imo, name, reg}], nextOffset }
+            const { items, nextOffset } = await ipcRenderer.invoke('get-vessels-by-homeport', {
+              homeport: current, offset: st.offset, limit: 200,
+            });
+
+            if (!items || !items.length) {
+              st.done = true;
+              if (st.offset === 0) {
+                tableUL.innerHTML = '<li class="disclosure-item"><span>(нет данных)</span><span></span><span></span></li>';
+              }
+            } else {
+              if (tableUL.dataset.loading) { tableUL.dataset.loading = ''; tableUL.innerHTML = ''; }
+              // Если данные только из SeaFleet — оставьте 'SeaFleet'; иначе можно вернуть model в item и доработать appendItems
+              appendItems(tableUL, items, 'SeaFleet');
+              st.offset = nextOffset;
+            }
+          } catch (e) {
+            console.error('get-vessels-by-homeport failed:', e);
+            st.done = true;
+            if (st.offset === 0) {
+              tableUL.innerHTML = '<li class="disclosure-item"><span>Ошибка загрузки</span><span></span><span></span></li>';
+            }
+          } finally {
+            st.busy = false;
           }
-        } else {
-          if (tableUL.dataset.loading){ tableUL.dataset.loading = ''; tableUL.innerHTML = ''; }
-          appendItems(tableUL, items, 'SeaFleet'); // см. комментарий выше про модель
-          st.offset = nextOffset;
         }
-      } catch (e) {
-        console.error('get-vessels-by-builder-country failed:', e);
-        st.done = true;
-        if (st.offset === 0){
-          tableUL.innerHTML = '<li class="disclosure-item"><span>Ошибка загрузки</span><span></span><span></span></li>';
+      })();
+
+      // ---- 2) СТРАНА СТРОИТЕЛЬ
+      (function initBuilderCountry() {
+        const typeUL  = document.querySelector('#builder-country-list');          // слева — список стран
+        const tableUL = document.querySelector('#builder-country-vessels-list');  // справа — суда выбранной страны
+        if (!typeUL || !tableUL) return;
+
+        injectHeader(tableUL, 'builder-country'); // шапка "IMO | Название | Рег. №"
+
+        let current = null;
+        const st = { offset: 0, busy: false, done: false };
+
+        // Загрузка уникальных стран строителей
+        (async () => {
+          try {
+            // Ожидаемый ответ: [{ value: 'Russia', count: 456 }, ...]
+            const countries = await ipcRenderer.invoke('get-builder-countries');
+            renderFacetList(typeUL, countries, 'value');
+          } catch (e) {
+            console.error('get-builder-countries failed:', e);
+            renderFacetList(typeUL, [], 'value');
+          }
+        })();
+
+        // Выбор страны
+        typeUL.addEventListener('click', (e) => {
+          const li = e.target.closest('.disclosure-item');
+          if (!li) return;
+
+          typeUL.querySelectorAll('.disclosure-item.is-selected').forEach(x => x.classList.remove('is-selected'));
+          li.classList.add('is-selected');
+
+          current = li.dataset.value || li.textContent.trim();
+          resetTable();
+          loadPage();
+
+          const det = tableUL.closest('details');
+          if (det && !det.open) det.open = true;
+        });
+
+        // Догрузка
+        tableUL.addEventListener('scroll', () => {
+          if (tableUL.scrollTop + tableUL.clientHeight >= tableUL.scrollHeight - 20) {
+            loadPage();
+          }
+        }, { passive: true });
+
+        // Клик по строке -> формуляр
+        tableUL.addEventListener('click', (e) => {
+          const li = e.target.closest('.disclosure-item');
+          if (li) openFormularByLi(li);
+        });
+
+        function resetTable() {
+          st.offset = 0; st.busy = false; st.done = false;
+          tableUL.dataset.loading = '1';
+          tableUL.innerHTML = '<li class="disclosure-item"><span>Загрузка…</span><span></span><span></span></li>';
         }
-      } finally {
-        st.busy = false;
+
+        async function loadPage() {
+          if (!current || st.busy || st.done) return;
+          st.busy = true;
+          try {
+            // Ожидаемый ответ: { items: [{id, imo, name, reg}], nextOffset }
+            const { items, nextOffset } = await ipcRenderer.invoke('get-vessels-by-builder-country', {
+              country: current, offset: st.offset, limit: 200,
+            });
+
+            if (!items || !items.length) {
+              st.done = true;
+              if (st.offset === 0) {
+                tableUL.innerHTML = '<li class="disclosure-item"><span>(нет данных)</span><span></span><span></span></li>';
+              }
+            } else {
+              if (tableUL.dataset.loading) { tableUL.dataset.loading = ''; tableUL.innerHTML = ''; }
+              appendItems(tableUL, items, 'SeaFleet'); // см. комментарий выше про модель
+              st.offset = nextOffset;
+            }
+          } catch (e) {
+            console.error('get-vessels-by-builder-country failed:', e);
+            st.done = true;
+            if (st.offset === 0) {
+              tableUL.innerHTML = '<li class="disclosure-item"><span>Ошибка загрузки</span><span></span><span></span></li>';
+            }
+          } finally {
+            st.busy = false;
+          }
+        }
+      })();
+    })(); // конец initFactory
+
+    // ===================== ВКЛАДКИ: ФЛОТ / ЗАВОД / ДВИГАТЕЛЬ =================
+    (function initTabs() {
+      const tablist = document.querySelector('.tabs[role="tablist"]');
+      if (!tablist) return;
+
+      const buttons = Array.from(tablist.querySelectorAll('button.tab[role="tab"][data-tab]'));
+      const panels = buttons
+        .map(btn => document.getElementById(btn.getAttribute('aria-controls')))
+        .filter(Boolean);
+
+      function activate(name, { updateHash = true } = {}) {
+        // переключаем кнопки
+        for (const btn of buttons) {
+          const isActive = btn.dataset.tab === name;
+          btn.classList.toggle('active', isActive);
+          btn.setAttribute('aria-selected', String(isActive));
+          btn.tabIndex = isActive ? 0 : -1;
+        }
+        // переключаем панели
+        const targetId = 'tab-' + name;
+        for (const p of panels) {
+          const on = p.id === targetId;
+          p.hidden = !on;
+          p.setAttribute('aria-hidden', String(!on));
+          p.classList.toggle('active', on);
+        }
+        // hash + память
+        if (updateHash) {
+          history.replaceState(null, '', '#' + name);
+          localStorage.setItem('activeTab', name);
+        }
       }
-    }
-  })();
-  // ====== Верхние вкладки: ФЛОТ / ЗАВОД / ДВИГАТЕЛЬ ======
-(() => {
-  const tablist = document.querySelector('.tabs[role="tablist"]');
-  if (!tablist) return;
 
-  const buttons = Array.from(tablist.querySelectorAll('button.tab[role="tab"][data-tab]'));
-  // панели берём из aria-controls у каждой кнопки
-  const panels = buttons
-    .map(btn => document.getElementById(btn.getAttribute('aria-controls')))
-    .filter(Boolean);
+      // Клик мышью
+      tablist.addEventListener('click', (e) => {
+        const btn = e.target.closest('button.tab[role="tab"][data-tab]');
+        if (!btn) return;
+        e.preventDefault();
+        activate(btn.dataset.tab);
+      });
 
-  function activate(name, { updateHash = true } = {}) {
-    // переключаем кнопки
-    for (const btn of buttons) {
-      const isActive = btn.dataset.tab === name;
-      btn.classList.toggle('active', isActive);
-      btn.setAttribute('aria-selected', String(isActive));
-      btn.tabIndex = isActive ? 0 : -1;
-    }
-    // переключаем панели
-    const targetId = 'tab-' + name;
-    for (const p of panels) {
-      const on = p.id === targetId;
-      p.hidden = !on;
-      p.setAttribute('aria-hidden', String(!on));
-      p.classList.toggle('active', on); // если где-то в стилях используешь .active
-    }
-    // hash + память
-    if (updateHash) {
-      history.replaceState(null, '', '#' + name);
-      localStorage.setItem('activeTab', name);
-    }
-  }
+      // Клавиатура
+      tablist.addEventListener('keydown', (e) => {
+        const idx = buttons.findIndex(b => b.classList.contains('active'));
+        let i = idx;
+        if (e.key === 'ArrowRight') { i = (idx + 1) % buttons.length; buttons[i].focus(); e.preventDefault(); }
+        else if (e.key === 'ArrowLeft') { i = (idx - 1 + buttons.length) % buttons.length; buttons[i].focus(); e.preventDefault(); }
+        else if (e.key === 'Home') { buttons[0].focus(); e.preventDefault(); }
+        else if (e.key === 'End') { buttons[buttons.length - 1].focus(); e.preventDefault(); }
+        else if (e.key === 'Enter' || e.key === ' ') {
+          const btn = document.activeElement?.closest('button.tab[role="tab"][data-tab]');
+          if (btn) activate(btn.dataset.tab);
+          e.preventDefault();
+        }
+      });
 
-  // Клик мышью
-  tablist.addEventListener('click', (e) => {
-    const btn = e.target.closest('button.tab[role="tab"][data-tab]');
-    if (!btn) return;
-    e.preventDefault();
-    activate(btn.dataset.tab);
-  });
+      // Реакция на изменение #hash
+      window.addEventListener('hashchange', () => {
+        const name = location.hash.slice(1);
+        if (buttons.some(b => b.dataset.tab === name)) {
+          activate(name, { updateHash: false });
+        }
+      });
 
-  // Клавиатура: ← → Home End, Enter/Space — активировать
-  tablist.addEventListener('keydown', (e) => {
-    const idx = buttons.findIndex(b => b.classList.contains('active'));
-    let i = idx;
-    if (e.key === 'ArrowRight') { i = (idx + 1) % buttons.length; buttons[i].focus(); e.preventDefault(); }
-    else if (e.key === 'ArrowLeft') { i = (idx - 1 + buttons.length) % buttons.length; buttons[i].focus(); e.preventDefault(); }
-    else if (e.key === 'Home') { buttons[0].focus(); e.preventDefault(); }
-    else if (e.key === 'End') { buttons[buttons.length - 1].focus(); e.preventDefault(); }
-    else if (e.key === 'Enter' || e.key === ' ') {
-      const btn = document.activeElement?.closest('button.tab[role="tab"][data-tab]');
-      if (btn) activate(btn.dataset.tab);
-      e.preventDefault();
-    }
-  });
+      // Старт: hash → localStorage → активная кнопка → первая
+      const start =
+        (location.hash && location.hash.slice(1)) ||
+        localStorage.getItem('activeTab') ||
+        buttons.find(b => b.classList.contains('active'))?.dataset.tab ||
+        buttons[0]?.dataset.tab;
 
-  // Реакция на изменение #hash (deeplink)
-  window.addEventListener('hashchange', () => {
-    const name = location.hash.slice(1);
-    if (buttons.some(b => b.dataset.tab === name)) {
-      activate(name, { updateHash: false });
-    }
-  });
+      if (start) activate(start, { updateHash: false });
+    })();
+  } // конец init
 
-  // Старт: hash → localStorage → активная кнопка → первая
-  const start =
-    (location.hash && location.hash.slice(1)) ||
-    localStorage.getItem('activeTab') ||
-    buttons.find(b => b.classList.contains('active'))?.dataset.tab ||
-    buttons[0]?.dataset.tab;
-
-  if (start) activate(start, { updateHash: false });
-})();
-
-})();}
-
-
-
-})();
+})(); // конец внешней IIFE

@@ -10,12 +10,12 @@
   <div id="page-content" data-title="Список судов">
 
     <!-- Глобальная строка поиска — уходит в шапку -->
-    <form class="search-bar" action="#" method="get" data-top-extra>
-      <input id="search-input" type="text" placeholder="Поиск по имени судна..." />
+    <form class="search-bar" action="#" method="get" data-top-extra onsubmit="return false">
+      <input id="search-input" type="text" placeholder="Поиск по имени судна..." autocomplete="off" />
       <button type="submit">🔍</button>
+      <ul id="search-suggest" class="search-suggest" role="listbox"></ul>
       <div id="result-info" style="margin-top:10px;font-weight:bold;"></div>
     </form>
-
     <!-- Вкладки -->
     <div class="tabs" role="tablist" aria-label="Разделы">
       <button class="tab active" data-tab="fleet"    role="tab" aria-selected="true" aria-controls="tab-fleet">ФЛОТ</button>
@@ -159,8 +159,10 @@
 
   <script src="assets/js/Baselayout.js"></script>
   <!-- твой скрипт с логикой вкладок и поиском -->
+  <script src="assets/js/searchWidget.js"></script>
   <script src="assets/js/indexScripts.js"></script>
   <!-- если у тебя есть загрузка данных — оставь -->
   <script src="assets/js/shipBackScripts.js"></script>
+ 
 </body>
 </html>

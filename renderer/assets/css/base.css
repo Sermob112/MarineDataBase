@@ -14,6 +14,22 @@
   box-sizing: border-box;
 }
 
+  .search-bar { position: relative; }
+  .search-suggest{
+    position: absolute; top: 100%; left: 0; right: 0;
+    max-height: 260px; overflow-y: auto;
+    background: var(--panel, #fff); border: 1px solid #ccc;
+    border-radius: 6px; margin: 4px 0 0; padding: 6px 0; z-index: 50;
+    box-shadow: 0 8px 20px rgba(0,0,0,.08);
+  }
+  .search-suggest .suggest-item{
+    display: flex; align-items: baseline; gap: 8px;
+    padding: 6px 10px; cursor: pointer;
+  }
+  .search-suggest .suggest-item:hover{ background: rgba(0,0,0,.06); }
+  .search-suggest small{ font-size: 12px; opacity:.7; margin-left:auto; }
+
+
 :root{
   /* Цвета */
   --bg: #f6f7f9;
@@ -457,3 +473,24 @@ th { cursor: pointer; user-select: none; }
   color: var(--primary-contrast);
 }
 [hidden]{ display:none !important; }
+
+/* чтобы меню/хедер не перекрывали подсказки */
+#top-extra { position: relative; z-index: 400; overflow: visible; } /* важное! */
+.search-bar { position: relative; }
+#search-suggest.search-suggest {
+  position: absolute; top: 100%; left: 0; right: 0;
+  max-height: 260px; overflow-y: auto;
+  background: var(--panel, #fff); border: 1px solid #ccc; border-radius: 6px;
+  margin: 4px 0 0; padding: 0; z-index: 500; /* выше top-extra */
+  box-shadow: 0 8px 20px rgba(0,0,0,.08);
+}
+
+/* ВЕРСТКА табличной выпадашки */
+.suggest-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.suggest-table th, .suggest-table td { padding: 8px 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.suggest-table thead th { position: sticky; top: 0; background: var(--panel, #fff); border-bottom: 1px solid #ddd; }
+.suggest-table tbody tr { cursor: pointer; }
+.suggest-table tbody tr:hover, .suggest-table tbody tr[aria-selected="true"] { background: rgba(0,0,0,.06); }
+.suggest-col-reg { width: 34%; }
+.suggest-col-imo { width: 28%; }
+.suggest-col-name{ width: 38%; }
